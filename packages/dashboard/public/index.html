@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="blue">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Belay · Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css?v=051" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧗%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+<canvas id="aurora"></canvas>
+<div id="grain"></div>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v6" /><path d="M12 8l5 4" /><circle cx="12" cy="15" r="3" /><path d="M9 17l-3 5" /><path d="M15 17l3 5" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <strong>Belay</strong>
+        <span>Mission Control</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="overview"><span class="ic">◉</span> Overview</button>
+      <button class="nav-item" data-view="runs"><span class="ic">⚡</span> Action Ledger <em class="badge" data-badge="runs"></em></button>
+      <button class="nav-item" data-view="workflows"><span class="ic">✨</span> Workflows <em class="badge" data-badge="workflows"></em></button>
+      <button class="nav-item" data-view="sagas"><span class="ic">⚛</span> Sagas</button>
+      <button class="nav-item" data-view="approvals"><span class="ic">✋</span> Approvals <em class="badge alert" data-badge="approvals"></em></button>
+    </nav>
+
+    <div class="rail-foot">
+      <div class="health" id="railHealth">
+        <div class="health-ring" id="railRing"></div>
+        <div class="health-meta"><span>Reliability</span><strong id="railHealthPct">—</strong></div>
+      </div>
+      <div class="mode-pill" id="modePill"><i></i><span>connecting…</span></div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb">
+        <h1 id="viewTitle">Overview</h1>
+        <p id="viewSub">Live reliability telemetry for your agent fleet</p>
+      </div>
+      <div class="top-actions">
+        <button class="cmd" id="cmdBtn"><span>⌘</span> Search <kbd>K</kbd></button>
+        <div class="livedot" id="liveDot" title="Live stream"><i></i> LIVE</div>
+        <div class="clock" id="clock">--:--:--</div>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
+        <button class="profile-chip" id="profileBtn" aria-label="Profile">
+          <span class="avatar" id="avatarTop">b</span>
+          <span class="pc-text"><strong id="profileName">blue</strong><span id="profileEmail">aveqll41@gmail.com</span></span>
+          <span class="pc-caret">▾</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="stage" id="stage"><!-- views render here --></section>
+  </main>
+</div>
+
+<!-- command palette -->
+<div class="palette-wrap" id="paletteWrap" hidden>
+  <div class="palette">
+    <input id="paletteInput" placeholder="Jump to a view, run, or workflow…" autocomplete="off" />
+    <div class="palette-list" id="paletteList"></div>
+  </div>
+</div>
+
+<!-- profile dropdown -->
+<div class="menu" id="profileMenu" hidden>
+  <div class="menu-head">
+    <span class="avatar lg">b</span>
+    <div><strong>blue</strong><span>aveqll41@gmail.com</span></div>
+  </div>
+  <div class="menu-sep"></div>
+  <button class="menu-item" data-act="account"><span>👤</span> Account settings</button>
+  <button class="menu-item" data-act="activity"><span>📊</span> Manage activity</button>
+  <button class="menu-item" data-act="settings"><span>🎨</span> Appearance &amp; settings</button>
+  <button class="menu-item" data-act="help"><span>📖</span> Help &amp; docs</button>
+  <div class="menu-sep"></div>
+  <button class="menu-item danger" data-act="logout"><span>⏻</span> Log out</button>
+</div>
+
+<!-- settings drawer -->
+<div class="drawer-scrim" id="drawerScrim" hidden></div>
+<aside class="drawer" id="settingsDrawer" hidden aria-label="Settings">
+  <div class="drawer-head">
+    <h3>Settings</h3>
+    <button class="icon-btn" id="drawerClose" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="set-group">
+      <label>Theme</label>
+      <div class="seg" id="themeSeg">
+        <button data-theme-opt="light">☀ Light</button>
+        <button data-theme-opt="dark">☾ Dark</button>
+      </div>
+    </div>
+    <div class="set-group">
+      <label>Accent color</label>
+      <div class="swatches" id="accentSwatches">
+        <button class="swatch" data-accent-opt="blue" style="--sw:#2f6bff" title="Blue"></button>
+        <button class="swatch" data-accent-opt="green" style="--sw:#0fae73" title="Green"></button>
+        <button class="swatch" data-accent-opt="orange" style="--sw:#f5740b" title="Orange"></button>
+        <button class="swatch" data-accent-opt="violet" style="--sw:#7c5cff" title="Violet"></button>
+        <button class="swatch" data-accent-opt="rose" style="--sw:#f43f5e" title="Rose"></button>
+      </div>
+    </div>
+    <div class="set-group">
+      <label>Account</label>
+      <button class="menu-item" data-act="account"><span>👤</span> Account settings</button>
+      <button class="menu-item" data-act="activity"><span>📊</span> Manage activity</button>
+      <button class="menu-item" data-act="help"><span>📖</span> Help &amp; docs</button>
+    </div>
+    <button class="danger-btn" data-act="logout">Log out</button>
+  </div>
+</aside>
+
+<div class="toasts" id="toasts"></div>
+
+<template id="tpl-overview">
+  <div class="grid-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="panel span-2 chart-panel">
+      <div class="panel-head"><h3>Throughput</h3><span class="panel-sub">actions / minute · last hour</span></div>
+      <div class="chart" id="throughputChart"></div>
+    </div>
+    <div class="panel donut-panel">
+      <div class="panel-head"><h3>Action mix</h3></div>
+      <div class="donut" id="statusDonut"></div>
+    </div>
+    <div class="panel span-3 feed-panel">
+      <div class="panel-head"><h3>Live activity</h3><span class="panel-sub" id="feedSub">streaming</span></div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+</template>
+
+<script src="/app.js?v=051" type="module"></script>
+
+<!-- ============ SETTINGS / PROFILE / THEME (self-contained) ============ -->
+<script>
+(function(){
+  var root=document.documentElement;
+  var $=function(s){return document.querySelector(s)};
+  var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var LS={theme:'belay.theme', accent:'belay.accent'};
+
+  function syncUI(){
+    var t=root.getAttribute('data-theme'), a=root.getAttribute('data-accent');
+    $$('#themeSeg [data-theme-opt]').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-theme-opt')===t)});
+    $$('#accentSwatches [data-accent-opt]').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-accent-opt')===a)});
+  }
+  function applyStored(){
+    root.setAttribute('data-theme', localStorage.getItem(LS.theme)||'light');
+    root.setAttribute('data-accent', localStorage.getItem(LS.accent)||'blue');
+    syncUI();
+  }
+  function toast(kind,title,msg){
+    var host=$('#toasts'); if(!host) return;
+    var el=document.createElement('div'); el.className='toast '+(kind||'info');
+    var dot=document.createElement('span'); dot.className='dot';
+    var box=document.createElement('div');
+    var b=document.createElement('b'); b.textContent=title||'';
+    var br=document.createElement('br');
+    var sp=document.createElement('span'); sp.textContent=msg||'';
+    box.appendChild(b); box.appendChild(br); box.appendChild(sp);
+    el.appendChild(dot); el.appendChild(box); host.appendChild(el);
+    setTimeout(function(){ el.style.opacity='0'; el.style.transform='translateX(40px)'; setTimeout(function(){el.remove()},320); },2600);
+  }
+  function setTheme(t){ root.setAttribute('data-theme',t); localStorage.setItem(LS.theme,t); syncUI(); toast('info','Theme', t==='dark'?'Dark · cinematic':'Light · solid'); }
+  function setAccent(a){ root.setAttribute('data-accent',a); localStorage.setItem(LS.accent,a); syncUI(); }
+
+  var drawer=$('#settingsDrawer'), scrim=$('#drawerScrim'), menu=$('#profileMenu');
+  function openDrawer(){ if(!drawer)return; drawer.hidden=false; scrim.hidden=false; requestAnimationFrame(function(){drawer.classList.add('open')}); }
+  function closeDrawer(){ if(!drawer)return; drawer.classList.remove('open'); scrim.hidden=true; setTimeout(function(){drawer.hidden=true},260); }
+  function toggleMenu(force){ if(!menu)return; menu.hidden = (force!==undefined)? !force : !menu.hidden; }
+
+  function logout(){
+    closeDrawer(); toggleMenu(false);
+    var o=document.createElement('div'); o.className='logout-screen';
+    var card=document.createElement('div'); card.className='logout-card';
+    card.innerHTML='<div class="logout-mark">🧗</div><h2>Signed out</h2><p>You have been logged out of Belay Mission Control.</p>';
+    var btn=document.createElement('button'); btn.className='btn approve'; btn.style.flex='none'; btn.textContent='Sign back in';
+    btn.addEventListener('click', function(){ o.remove(); toast('ok','Welcome back','Signed in as blue'); });
+    card.appendChild(btn); o.appendChild(card); document.body.appendChild(o);
+  }
+
+  function act(a){
+    toggleMenu(false);
+    if(a==='settings'||a==='account'){ openDrawer(); }
+    else if(a==='activity'){ var n=document.querySelector('[data-view="runs"]'); if(n) n.click(); }
+    else if(a==='help'){ toast('info','Docs','Full docs live in the repo README.'); }
+    else if(a==='logout'){ logout(); }
+  }
+
+  function patchRing(){
+    var ring=$('#railRing'); if(!ring) return;
+    var obs=new MutationObserver(function(){
+      var bg=ring.style.background; if(!bg) return;
+      var track=getComputedStyle(root).getPropertyValue('--ring-track').trim();
+      var fixed=bg.replace(/rgba\(255,\s*255,\s*255,\s*0?\.08\)/g, track);
+      if(fixed!==bg){ obs.disconnect(); ring.style.background=fixed; obs.observe(ring,{attributes:true,attributeFilter:['style']}); }
+    });
+    obs.observe(ring,{attributes:true,attributeFilter:['style']});
+  }
+
+  function bind(){
+    var sBtn=$('#settingsBtn'); if(sBtn) sBtn.addEventListener('click', openDrawer);
+    var dClose=$('#drawerClose'); if(dClose) dClose.addEventListener('click', closeDrawer);
+    if(scrim) scrim.addEventListener('click', closeDrawer);
+    var tSeg=$('#themeSeg'); if(tSeg) tSeg.addEventListener('click', function(e){ var b=e.target.closest('[data-theme-opt]'); if(b) setTheme(b.getAttribute('data-theme-opt')); });
+    var aSw=$('#accentSwatches'); if(aSw) aSw.addEventListener('click', function(e){ var b=e.target.closest('[data-accent-opt]'); if(b) setAccent(b.getAttribute('data-accent-opt')); });
+    var pBtn=$('#profileBtn'); if(pBtn) pBtn.addEventListener('click', function(e){ e.stopPropagation(); toggleMenu(); });
+    if(menu) menu.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){ toggleMenu(false); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ toggleMenu(false); closeDrawer(); } });
+    [menu, drawer].forEach(function(rt){ if(rt) rt.addEventListener('click', function(e){ var a=e.target.closest('[data-act]'); if(a){ e.stopPropagation(); act(a.getAttribute('data-act')); } }); });
+    patchRing();
+  }
+
+  applyStored(); bind();
+})();
+</script>
+</body>
+</html>
