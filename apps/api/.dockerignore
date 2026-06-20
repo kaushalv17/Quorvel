@@ -1,0 +1,12 @@
+node_modules
+test
+**/*.test.ts
+src/_ambient.sandbox.d.ts
+.git
+.env
+.env.*
+_sandbox
+Dockerfile
+.dockerignore
+docker-compose.yml
+npm-debug.log

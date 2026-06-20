@@ -1,0 +1,32 @@
+# Render.com blueprint: Dockerized web service + managed Postgres + Redis (keyvalue).
+services:
+  - type: web
+    name: belay-cloud-api
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: belay-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: belay-redis
+          property: connectionString
+      - key: BELAY_QUEUE_NAME
+        value: belay-events
+      - key: BELAY_ADMIN_SECRET
+        generateValue: true
+      - key: PORT
+        value: "8080"
+
+  - type: keyvalue
+    name: belay-redis
+    plan: starter
+    ipAllowList: []
+
+databases:
+  - name: belay-postgres
+    plan: basic-256mb

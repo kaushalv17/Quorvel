@@ -1,0 +1,28 @@
+{
+  "name": "@belay/cloud-api",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Belay Cloud: hosted reliability ledger \u2014 Fastify REST API implementing the @belay/core LedgerStore contract over Postgres, with API-key auth, per-org isolation, BullMQ/Redis event ingest, alerting, and Stripe metered billing.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "test": "tsx test/api.test.ts && tsx test/queue.test.ts && tsx test/alerts.test.ts && tsx test/billing.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": ["belay", "reliability", "ledger", "fastify", "postgres", "redis", "bullmq", "idempotency", "approvals", "billing", "agents"],
+  "license": "MIT",
+  "dependencies": {
+    "bullmq": "^5.7.0",
+    "fastify": "^5.0.0",
+    "ioredis": "^5.4.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

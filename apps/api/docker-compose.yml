@@ -1,0 +1,47 @@
+# Local dev stack: API + Postgres + Redis. Brings up the full ingest path
+# (synchronous PG writes + BullMQ/Redis event bus) for end-to-end testing.
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://belay:belay@postgres:5432/belay
+      REDIS_URL: redis://redis:6379
+      BELAY_QUEUE_NAME: belay-events
+      BELAY_ADMIN_SECRET: dev-admin-secret
+      PORT: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: belay
+      POSTGRES_PASSWORD: belay
+      POSTGRES_DB: belay
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U belay"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - belay-pg:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  belay-pg:
