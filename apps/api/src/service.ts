@@ -9,6 +9,7 @@ import { actionCreated, actionTransition } from "./events"
 import { currentPeriod, planLimit, type UsageLimiter, type UsageSnapshot } from "./billing"
 import { generateApiKey, hashApiKey, keyPrefix, newId } from "./keys"
 import { toRecord, type Store } from "./store"
+import type { PaddleBilling, CheckoutResult, WebhookResult } from "./paddle"
 import type { EventBus } from "./bus"
 import type {
 	ActionRecord,
@@ -40,15 +41,18 @@ export const quotaError = (msg: string) => new ApiError(msg, 402, "quota_exceede
 export interface ServiceDeps {
 	bus?: EventBus
 	limiter?: UsageLimiter
+	billing?: PaddleBilling
 }
 
 export class BelayCloudService {
 	private readonly bus?: EventBus
 	private readonly limiter?: UsageLimiter
+	private readonly billing?: PaddleBilling
 
 	constructor(private readonly store: Store, deps: ServiceDeps = {}) {
 		this.bus = deps.bus
 		this.limiter = deps.limiter
+		this.billing = deps.billing
 	}
 
 	async issueApiKey(input: IssueKeyInput): Promise<IssueKeyResult> {
@@ -158,6 +162,34 @@ export class BelayCloudService {
 			tool: filter.tool,
 			since: filter.since ?? null,
 		})
+	}
+
+	async createCheckout(
+		orgId: string,
+		input: { plan?: string },
+	): Promise<CheckoutResult> {
+		if (!this.billing) throw badRequest("billing is not configured")
+		const plan = input?.plan
+		if (plan !== "pro" && plan !== "scale") {
+			throw badRequest("plan must be 'pro' or 'scale'")
+		}
+		return this.billing.createCheckout(orgId, plan)
+	}
+
+	async handlePaddleWebhook(
+		rawBody: string,
+		signature: string | undefined,
+	): Promise<WebhookResult> {
+		if (!this.billing) throw badRequest("billing is not configured")
+		try {
+			return await this.billing.handleWebhook(rawBody, signature, this.store)
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : "webhook error"
+			if (msg.includes("signature") || msg.includes("payload")) {
+				throw authError(msg)
+			}
+			throw e
+		}
 	}
 
 	async usage(orgId: string): Promise<UsageSnapshot> {

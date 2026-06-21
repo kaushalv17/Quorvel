@@ -24,9 +24,10 @@ import {
 	type UsageReporter,
 	type UsageStore,
 } from "./billing"
+import { PaddleBilling } from "./paddle"
 
 export interface ServiceDepsBundle {
-	deps: { bus: EventBus; limiter: UsageMeter }
+	deps: { bus: EventBus; limiter: UsageMeter; billing?: PaddleBilling }
 	bus: EventBus
 	close(): Promise<void>
 }
@@ -46,6 +47,19 @@ export function buildDeps(
 		? new StripeMeter({ secretKey: env.STRIPE_SECRET_KEY })
 		: undefined
 	const meter = new UsageMeter(usageStore, plans, reporter)
+
+	const priceToPlan: Record<string, string> = {}
+	if (env.PADDLE_PRICE_PRO) priceToPlan[env.PADDLE_PRICE_PRO] = "pro"
+	if (env.PADDLE_PRICE_SCALE) priceToPlan[env.PADDLE_PRICE_SCALE] = "scale"
+	const billing =
+		env.PADDLE_API_KEY && env.PADDLE_WEBHOOK_SECRET
+			? new PaddleBilling({
+					apiKey: env.PADDLE_API_KEY,
+					webhookSecret: env.PADDLE_WEBHOOK_SECRET,
+					priceToPlan,
+					apiBase: env.PADDLE_API_BASE,
+				})
+			: undefined
 
 	const transports: AlertTransport[] = []
 	if (env.SLACK_WEBHOOK_URL) transports.push(new SlackTransport(env.SLACK_WEBHOOK_URL))
@@ -78,5 +92,5 @@ export function buildDeps(
 		bus = new InProcessBus(subscribers)
 	}
 
-	return { deps: { bus, limiter: meter }, bus, close }
+	return { deps: { bus, limiter: meter, billing }, bus, close }
 }

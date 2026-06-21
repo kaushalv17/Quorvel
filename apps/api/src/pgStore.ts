@@ -70,6 +70,10 @@ export class PgStore implements Store {
 		)
 	}
 
+	async setOrgPlan(orgId: string, plan: string): Promise<void> {
+		await this.pool.query("update orgs set plan=$2 where id=$1", [orgId, plan])
+	}
+
 	async getApiKeyByHash(hash: string): Promise<ApiKeyRecord | undefined> {
 		const { rows } = await this.pool.query(
 			`select id, org_id, key_hash, key_prefix, name, created_at, last_used_at, revoked_at from api_keys where key_hash=$1`,

@@ -43,6 +43,7 @@ export interface Store {
 	getOrg(orgId: string): Promise<Org | undefined>
 	insertApiKey(rec: ApiKeyRecord): Promise<void>
 	getApiKeyByHash(hash: string): Promise<ApiKeyRecord | undefined>
+	setOrgPlan(orgId: string, plan: string): Promise<void>
 
 	getAction(orgId: string, key: string): Promise<StoredAction | undefined>
 	insertPending(orgId: string, input: InsertPendingInput): Promise<InsertResult>
@@ -79,6 +80,11 @@ export class MemStore implements Store {
 
 	async insertApiKey(rec: ApiKeyRecord): Promise<void> {
 		this.keys.set(rec.keyHash, rec)
+	}
+
+	async setOrgPlan(orgId: string, plan: string): Promise<void> {
+		const org = this.orgs.get(orgId)
+		if (org) org.plan = plan
 	}
 
 	async getApiKeyByHash(hash: string): Promise<ApiKeyRecord | undefined> {

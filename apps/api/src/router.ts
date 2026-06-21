@@ -10,6 +10,7 @@ export interface RawRequest {
 	query: Record<string, string | undefined>
 	body: any
 	headers: Record<string, string | undefined>
+	rawBody?: string
 }
 
 export interface RawResponse {
@@ -37,8 +38,23 @@ export async function handleRequest(
 			return { status: 201, body: await svc.issueApiKey(req.body ?? {}) }
 		}
 
+		// Paddle webhooks authenticate by signature (raw body), not a Bearer key.
+		if (req.method === "POST" && req.path === "/v1/webhooks/paddle") {
+			return {
+				status: 200,
+				body: await svc.handlePaddleWebhook(
+					req.rawBody ?? "",
+					req.headers["paddle-signature"],
+				),
+			}
+		}
+
 		// Everything else under /v1 needs a valid Bearer key.
 		const { orgId } = await svc.authenticate(req.headers["authorization"])
+
+		if (req.path === "/v1/billing/checkout" && req.method === "POST") {
+			return { status: 200, body: await svc.createCheckout(orgId, req.body ?? {}) }
+		}
 
 		if (req.path === "/v1/usage" && req.method === "GET") {
 			return { status: 200, body: await svc.usage(orgId) }

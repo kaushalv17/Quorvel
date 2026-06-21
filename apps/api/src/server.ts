@@ -14,6 +14,21 @@ export interface ServerOptions {
 
 export function buildServer(store: Store, opts: ServerOptions = {}) {
 	const app = Fastify({ logger: false })
+	// Capture the raw JSON body so webhook signatures can be verified.
+	app.addContentTypeParser(
+		"application/json",
+		{ parseAs: "string" },
+		(req: any, body: any, done: any) => {
+			;(req as any).rawBody = body
+			if (!body) return done(null, undefined)
+			try {
+				done(null, JSON.parse(body as string))
+			} catch (err) {
+				done(err as Error, undefined)
+			}
+		},
+	)
+
 	const svc = new BelayCloudService(store, opts.deps)
 	const adminSecret = opts.adminSecret ?? process.env.BELAY_ADMIN_SECRET
 
@@ -26,6 +41,7 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
 			query: req.query ?? {},
 			body: req.body,
 			headers: req.headers ?? {},
+			rawBody: (req as any).rawBody,
 		})
 		reply.code(res.status)
 		return res.body ?? null
