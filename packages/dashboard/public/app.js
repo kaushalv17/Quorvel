@@ -1,4 +1,4 @@
-// Belay Mission Control — client. Vanilla ES modules, no build step.
+// Quorvel Mission Control — client. Vanilla ES modules, no build step.
 const $ = (s, r = document) => r.querySelector(s)
 const $$ = (s, r = document) => [...r.querySelectorAll(s)]
 const api = (p, o) => fetch(p, o).then((r) => r.json())

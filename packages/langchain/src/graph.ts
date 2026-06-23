@@ -1,9 +1,9 @@
 import { ToolMessage } from "@langchain/core/messages"
-import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "belay"
-import type { Ledger } from "belay"
+import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "@quorvel/core"
+import type { Ledger } from "@quorvel/core"
 import {
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	resolve,
 	resolvePendingKey,
 	defaultPendingResult,
@@ -22,7 +22,7 @@ export interface ToolCall {
 /** A plain handler for a tool call when you don't have a LangChain tool object. */
 export type ToolHandler = (args: any, ctx: { callId?: string }) => unknown | Promise<unknown>
 
-export interface ToolRunnerOptions extends BelayBinding {
+export interface ToolRunnerOptions extends QuorvelBinding {
 	/** How tool results are serialized into ToolMessage content. Default: JSON (strings pass through). */
 	serialize?: (value: unknown) => string
 }
@@ -42,13 +42,13 @@ function toHandlerMap(
 }
 
 /**
- * Build a Belay-guarded dispatcher for the LangGraph / LangChain tool-calling
+ * Build a Quorvel-guarded dispatcher for the LangGraph / LangChain tool-calling
  * loop. Give it your tools (or raw handlers); it consumes an AIMessage's
  * `tool_calls` and returns ready-to-append `ToolMessage`s — with exactly-once
  * dedupe (the "model emitted the same tool call twice" problem just works),
  * durable ledger recording, and policy / approval gating built in.
  *
- * This is the manual-dispatch alternative to wrapping tools with `withBelay`
+ * This is the manual-dispatch alternative to wrapping tools with `withQuorvel`
  * and handing them to a prebuilt `ToolNode`; use whichever fits your graph.
  *
  * ```ts
@@ -80,7 +80,7 @@ export function createToolRunner(
 				status: "error",
 			})
 		}
-		const ctx: BelayInvocationContext = { toolName: name, callId }
+		const ctx: QuorvelInvocationContext = { toolName: name, callId }
 		try {
 			const result = await run(ledger, {
 				tool: name,
@@ -126,16 +126,16 @@ export function createToolRunner(
 /**
  * Wrap a single raw handler for manual dispatch (when you route tool calls
  * yourself). Returns a function with the same `(args)` signature that routes
- * through Belay and returns the raw result (or the approval/denied marker).
+ * through Quorvel and returns the raw result (or the approval/denied marker).
  */
 export function guard(
 	ledger: Ledger,
 	name: string,
 	handler: ToolHandler,
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): (args: any, ctx?: { callId?: string }) => Promise<unknown> {
 	return async (args: any, ctx: { callId?: string } = {}) => {
-		const ictx: BelayInvocationContext = { toolName: name, callId: ctx.callId }
+		const ictx: QuorvelInvocationContext = { toolName: name, callId: ctx.callId }
 		try {
 			return await run(ledger, {
 				tool: name,

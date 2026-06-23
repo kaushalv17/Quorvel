@@ -82,7 +82,7 @@ export function buildDeps(
 	if (env.REDIS_URL) {
 		const queue = createQueue<DomainEvent>({
 			redisUrl: env.REDIS_URL,
-			queueName: env.BELAY_QUEUE_NAME,
+			queueName: env.QUORVEL_QUEUE_NAME,
 		})
 		bus = new QueueBus(queue, subscribers)
 		close = async () => {

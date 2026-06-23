@@ -1,12 +1,12 @@
 /**
- * HostedLedger: a LedgerStore backed by Belay Cloud over HTTP.
+ * HostedLedger: a LedgerStore backed by Quorvel Cloud over HTTP.
  *
  * This is the one-line switch from local to hosted. Anywhere you'd construct an
  * InMemoryLedger or PostgresLedger, construct a HostedLedger with your API key
  * instead and every guard, budget, idempotency check, and approval flows
  * through the hosted service — no other code changes.
  *
- *   const ledger = new HostedLedger({ apiKey: process.env.BELAY_API_KEY! })
+ *   const ledger = new HostedLedger({ apiKey: process.env.QUORVEL_API_KEY! })
  *
  * Transport is the platform-native `fetch` (Node 18+, Bun, Deno, browsers,
  * edge). No dependencies. Inject `fetch` for tests or exotic runtimes.
@@ -22,9 +22,9 @@ import type {
 } from "./ledger.js"
 
 export interface HostedLedgerOptions {
-  /** Belay API key (e.g. "bly_live_..."). Sent as a Bearer token. */
+  /** Quorvel API key (e.g. "qrv_live_..."). Sent as a Bearer token. */
   apiKey: string
-  /** Base URL of the Belay Cloud API. Defaults to https://api.belay.dev. */
+  /** Base URL of the Quorvel Cloud API. Defaults to https://api.belay.dev. */
   baseUrl?: string
   /** Override the fetch implementation (tests, custom runtimes). */
   fetch?: typeof fetch
@@ -164,7 +164,7 @@ export class HostedLedger implements LedgerStore {
   }
 
   private async toError(res: Response): Promise<HostedLedgerError> {
-    let message = `Belay API ${res.status}`
+    let message = `Quorvel API ${res.status}`
     let code: string | undefined
     try {
       const data = JSON.parse(await res.text()) as {

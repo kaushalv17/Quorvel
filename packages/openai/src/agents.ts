@@ -1,8 +1,8 @@
-import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "belay"
-import type { Ledger } from "belay"
+import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "@quorvel/core"
+import type { Ledger } from "@quorvel/core"
 import {
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	resolve,
 	defaultPendingResult,
 	defaultDeniedResult,
@@ -47,16 +47,16 @@ export interface OpenAIAgentTool {
 }
 
 /**
- * Wrap a single OpenAI Agents SDK tool so every invocation flows through Belay:
+ * Wrap a single OpenAI Agents SDK tool so every invocation flows through Quorvel:
  * exactly-once idempotency, durable ledger, policy (budgets / rate limits /
  * approval gates). The returned tool is a drop-in replacement — same name,
  * description, and parameters — so the Agents SDK never knows the difference.
  *
  * ```ts
  * import { tool } from "@openai/agents"
- * import { withBelay } from "@belay/openai"
+ * import { withQuorvel } from "@quorvel/openai"
  *
- * const refund = withBelay(ledger, tool({
+ * const refund = withQuorvel(ledger, tool({
  *   name: "refund",
  *   description: "Refund a charge",
  *   parameters: z.object({ chargeId: z.string(), amount: z.number() }),
@@ -68,14 +68,14 @@ export interface OpenAIAgentTool {
  * })
  * ```
  */
-export function withBelay<T extends OpenAIAgentTool>(
+export function withQuorvel<T extends OpenAIAgentTool>(
 	ledger: Ledger,
 	tool: T,
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): T {
 	const originalExecute = tool.execute
 	const wrappedExecute = async (args: any, runContext?: any) => {
-		const ctx: BelayInvocationContext = { toolName: tool.name, runContext }
+		const ctx: QuorvelInvocationContext = { toolName: tool.name, runContext }
 		try {
 			return await run(ledger, {
 				tool: tool.name,
@@ -102,10 +102,10 @@ export function withBelay<T extends OpenAIAgentTool>(
 }
 
 /** Wrap many Agents SDK tools at once with the same binding. */
-export function withBelayAll<T extends OpenAIAgentTool>(
+export function withQuorvelAll<T extends OpenAIAgentTool>(
 	ledger: Ledger,
 	tools: T[],
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): T[] {
-	return tools.map((t) => withBelay(ledger, t, binding))
+	return tools.map((t) => withQuorvel(ledger, t, binding))
 }

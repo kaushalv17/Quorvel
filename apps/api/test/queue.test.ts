@@ -3,7 +3,7 @@
 import { assert, it, section, summary } from "./_assert"
 import { InMemoryQueue } from "../src/queue"
 import { InProcessBus, QueueBus, type Subscriber } from "../src/bus"
-import { BelayCloudService } from "../src/service"
+import { QuorvelCloudService } from "../src/service"
 import { MemStore } from "../src/store"
 import type { DomainEvent } from "../src/events"
 
@@ -88,7 +88,7 @@ await (async () => {
 	await it("insertPending emits action.created; marks emit action.transition", async () => {
 		const events: DomainEvent[] = []
 		const bus = new InProcessBus([async (e) => { events.push(e) }])
-		const svc = new BelayCloudService(new MemStore(), { bus })
+		const svc = new QuorvelCloudService(new MemStore(), { bus })
 		await svc.insertPending("o", { idempotencyKey: "k", scope: "agent1", tool: "email" })
 		await svc.markRunning("o", "k")
 		await svc.markSucceeded("o", "k", null)
@@ -103,7 +103,7 @@ await (async () => {
 	await it("duplicate insertPending does NOT emit a second created event", async () => {
 		const events: DomainEvent[] = []
 		const bus = new InProcessBus([async (e) => { events.push(e) }])
-		const svc = new BelayCloudService(new MemStore(), { bus })
+		const svc = new QuorvelCloudService(new MemStore(), { bus })
 		await svc.insertPending("o", { idempotencyKey: "dup", scope: null, tool: "t" })
 		await svc.insertPending("o", { idempotencyKey: "dup", scope: null, tool: "t" })
 		assert.equal(events.filter((e) => e.type === "action.created").length, 1)

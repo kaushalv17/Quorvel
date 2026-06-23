@@ -1,8 +1,8 @@
-import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "belay"
-import type { Ledger } from "belay"
+import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "@quorvel/core"
+import type { Ledger } from "@quorvel/core"
 import {
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	resolve,
 	defaultPendingResult,
 	defaultDeniedResult,
@@ -33,7 +33,7 @@ async function resolvePendingKey(
 /** A plain handler for an OpenAI function/tool call (classic function calling). */
 export type ToolHandler = (args: any, ctx: { callId?: string }) => unknown | Promise<unknown>
 
-export interface ToolRunnerOptions extends BelayBinding {
+export interface ToolRunnerOptions extends QuorvelBinding {
 	/**
 	 * Output message shape. "chat" => Chat Completions `{ role:"tool", tool_call_id, content }`.
 	 * "responses" => Responses API `{ type:"function_call_output", call_id, output }`. Default "chat".
@@ -82,7 +82,7 @@ function parseArgs(raw: unknown): any {
 }
 
 /**
- * Build a Belay-guarded dispatcher for the classic OpenAI function-calling loop
+ * Build a Quorvel-guarded dispatcher for the classic OpenAI function-calling loop
  * (Chat Completions / Responses). You give it your handlers; it consumes the
  * model's `tool_calls` and returns ready-to-send tool messages — with
  * exactly-once dedupe (the documented "model called the same tool twice" bug just
@@ -115,7 +115,7 @@ export function createToolRunner(
 		const { callId, name, rawArgs } = normalizeToolCall(tc)
 		const handler = handlers[name]
 		const args = parseArgs(rawArgs)
-		const ctx: BelayInvocationContext = { toolName: name, callId }
+		const ctx: QuorvelInvocationContext = { toolName: name, callId }
 		if (!handler) {
 			return toMessage(callId, {
 				_belay: "error",
@@ -166,16 +166,16 @@ export function createToolRunner(
 /**
  * Wrap a single handler for manual dispatch (when you route tool calls
  * yourself). Returns a function with the same `(args)` signature that routes
- * through Belay and returns the raw result (or the approval/denied marker).
+ * through Quorvel and returns the raw result (or the approval/denied marker).
  */
 export function guard(
 	ledger: Ledger,
 	name: string,
 	handler: ToolHandler,
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): (args: any, ctx?: { callId?: string }) => Promise<unknown> {
 	return async (args: any, ctx: { callId?: string } = {}) => {
-		const ictx: BelayInvocationContext = { toolName: name, callId: ctx.callId }
+		const ictx: QuorvelInvocationContext = { toolName: name, callId: ctx.callId }
 		try {
 			return await run(ledger, {
 				tool: name,

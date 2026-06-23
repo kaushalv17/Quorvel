@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Belay · Mission Control</title>
+<title>Quorvel · Mission Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -24,7 +24,7 @@
         </svg>
       </div>
       <div class="brand-text">
-        <strong>Belay</strong>
+        <strong>Quorvel</strong>
         <span>Mission Control</span>
       </div>
     </div>
@@ -156,7 +156,7 @@
   var root=document.documentElement;
   var $=function(s){return document.querySelector(s)};
   var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
-  var LS={theme:'belay.theme', accent:'belay.accent'};
+  var LS={theme:'quorvel.theme', accent:'quorvel.accent'};
 
   function syncUI(){
     var t=root.getAttribute('data-theme'), a=root.getAttribute('data-accent');
@@ -192,7 +192,7 @@
     closeDrawer(); toggleMenu(false);
     var o=document.createElement('div'); o.className='logout-screen';
     var card=document.createElement('div'); card.className='logout-card';
-    card.innerHTML='<div class="logout-mark">🧗</div><h2>Signed out</h2><p>You have been logged out of Belay Mission Control.</p>';
+    card.innerHTML='<div class="logout-mark">🧗</div><h2>Signed out</h2><p>You have been logged out of Quorvel Mission Control.</p>';
     var btn=document.createElement('button'); btn.className='btn approve'; btn.style.flex='none'; btn.textContent='Sign back in';
     btn.addEventListener('click', function(){ o.remove(); toast('ok','Welcome back','Signed in as blue'); });
     card.appendChild(btn); o.appendChild(card); document.body.appendChild(o);

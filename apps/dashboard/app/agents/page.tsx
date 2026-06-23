@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { serverClient } from "../../lib/server-client"
-import { groupByScope } from "../../lib/belay"
+import { groupByScope } from "../../lib/quorvel"
 
 export const dynamic = "force-dynamic"
 

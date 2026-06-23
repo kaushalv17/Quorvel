@@ -1,13 +1,13 @@
 /**
- * Belay Mission Control — observability server.
+ * Quorvel Mission Control — observability server.
  *
  * Zero web-framework: just Node's http + pg. Serves a single-page cinematic
  * dashboard from ./public and a small JSON API + a live Server-Sent-Events
- * stream over your real Belay tables in Postgres (Neon).
+ * stream over your real Quorvel tables in Postgres (Neon).
  *
  * Two data sources, chosen automatically:
  *   - PostgresSource : when DATABASE_URL is set (reads belay_* tables).
- *   - DemoSource     : when DATABASE_URL is missing or BELAY_DEMO=1. A living,
+ *   - DemoSource     : when DATABASE_URL is missing or QUORVEL_DEMO=1. A living,
  *                      synthetic world so you can see the UI instantly.
  *
  * Run:
@@ -29,7 +29,7 @@ for (const envPath of [".env", join(__dirname, "..", "..", ".env")]) {
 }
 
 const PORT = Number(process.env.PORT || 4317) // 4317 = OTLP's port, a wink to observability
-const FORCE_DEMO = process.argv.includes("--demo") || process.env.BELAY_DEMO === "1" || !process.env.DATABASE_URL
+const FORCE_DEMO = process.argv.includes("--demo") || process.env.QUORVEL_DEMO === "1" || !process.env.DATABASE_URL
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -326,7 +326,7 @@ function buildOverview({ actions, sagas, workflows, cost, recent }) {
 // ---------------------------------------------------------------------------
 async function makeSource() {
   if (FORCE_DEMO) {
-    console.log("\u25c8 Belay Mission Control — DEMO mode (synthetic data)")
+    console.log("\u25c8 Quorvel Mission Control — DEMO mode (synthetic data)")
     return new DemoSource()
   }
   const pg = (await import("pg")).default
@@ -334,7 +334,7 @@ async function makeSource() {
   const needsSsl = /sslmode=require|sslmode=verify-full|neon\.tech|\.aws\./i.test(url)
   const pool = new pg.Pool({ connectionString: url, ssl: needsSsl ? { rejectUnauthorized: false } : undefined })
   await pool.query("select 1")
-  console.log("\u25c8 Belay Mission Control — LIVE mode (Postgres)")
+  console.log("\u25c8 Quorvel Mission Control — LIVE mode (Postgres)")
   return new PostgresSource(pool)
 }
 

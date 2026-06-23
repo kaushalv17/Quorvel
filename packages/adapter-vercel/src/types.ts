@@ -1,4 +1,4 @@
-// Core type surface for the Belay Vercel AI SDK adapter.
+// Core type surface for the Quorvel Vercel AI SDK adapter.
 // Intentionally framework-agnostic: tools are matched structurally so the
 // adapter never needs a hard dependency on the `ai` package at runtime.
 

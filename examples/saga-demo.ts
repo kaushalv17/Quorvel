@@ -1,6 +1,6 @@
 /**
- * Belay Phase 3 demo: a checkout saga. charge -> reserve inventory -> ship.
- * Shipping fails, so Belay AUTOMATICALLY rolls back the reservation and the
+ * Quorvel Phase 3 demo: a checkout saga. charge -> reserve inventory -> ship.
+ * Shipping fails, so Quorvel AUTOMATICALLY rolls back the reservation and the
  * charge — in reverse order, exactly once. No orphaned money, no orphaned stock.
  *
  * Run it:  pnpm demo:saga

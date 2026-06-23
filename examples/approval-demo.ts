@@ -1,5 +1,5 @@
 /**
- * Belay Phase 2 demo: an agent tries a big refund. Policy parks it for approval.
+ * Quorvel Phase 2 demo: an agent tries a big refund. Policy parks it for approval.
  * A human approves it. Only then does it run — exactly once.
  *
  * Run it:  pnpm demo:approval

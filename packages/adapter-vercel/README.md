@@ -1,19 +1,19 @@
-# @belay/adapter-vercel
+# @quorvel/adapter-vercel
 
-> Wrap your [Vercel AI SDK](https://sdk.vercel.ai) tools with Belay's reliability layer — **idempotency, retries, budgets, and human approvals** — in one line.
+> Wrap your [Vercel AI SDK](https://sdk.vercel.ai) tools with Quorvel's reliability layer — **idempotency, retries, budgets, and human approvals** — in one line.
 
-Belay catches your AI agent when it falls. This adapter makes every tool call in your AI SDK agent:
+Quorvel catches your AI agent when it falls. This adapter makes every tool call in your AI SDK agent:
 
 - **Idempotent** — identical `(tool, args)` calls return the cached result instead of re-running side effects.
 - **Resilient** — transient failures are retried with full-jitter exponential backoff.
 - **Governed** — per-session budgets cap how many calls (or how much money) an agent can spend.
 - **Safe** — sensitive tools can require a human approval before they execute.
-- **Observable** — every lifecycle event streams into Belay Mission Control.
+- **Observable** — every lifecycle event streams into Quorvel Mission Control.
 
 ## Install
 
 ```bash
-pnpm add @belay/adapter-vercel
+pnpm add @quorvel/adapter-vercel
 # peers (you already have these in an AI SDK app)
 pnpm add ai zod
 ```
@@ -24,9 +24,9 @@ pnpm add ai zod
 import { generateText, tool } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
-import { createBelay } from "@belay/adapter-vercel"
+import { createQuorvel } from "@quorvel/adapter-vercel"
 
-const belay = createBelay({
+const belay = createQuorvel({
 	budget: { maxCostCents: 500 },
 	perTool: {
 		refund: {
@@ -62,7 +62,7 @@ Two approval modes:
 - **`wait`** — the call blocks until the approval is resolved (via your `waitForApproval` callback or store polling).
 
 ```ts
-import { ApprovalRequiredError } from "@belay/adapter-vercel"
+import { ApprovalRequiredError } from "@quorvel/adapter-vercel"
 
 try {
 	await tools.refund.execute({ orderId: "o_1", amountCents: 50_000 })
@@ -77,7 +77,7 @@ try {
 
 ## Bring your own store
 
-The adapter depends only on the `ReliabilityStore` interface. The default is an in-process `InMemoryStore`; in production, back it with the Belay Postgres ledger so idempotency and approvals survive restarts and span your whole fleet.
+The adapter depends only on the `ReliabilityStore` interface. The default is an in-process `InMemoryStore`; in production, back it with the Quorvel Postgres ledger so idempotency and approvals survive restarts and span your whole fleet.
 
 ## Errors
 

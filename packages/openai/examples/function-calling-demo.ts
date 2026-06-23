@@ -1,9 +1,9 @@
-// Demo: classic OpenAI function calling (Chat Completions) + Belay.
+// Demo: classic OpenAI function calling (Chat Completions) + Quorvel.
 // This mirrors vercel/ai issue #7261: the model emits duplicate tool calls.
-// Belay's dispatcher dedupes them and returns ready-to-send tool messages.
+// Quorvel's dispatcher dedupes them and returns ready-to-send tool messages.
 //
 //   pnpm tsx examples/function-calling-demo.ts
-import { InMemoryLedger, rateLimit } from "belay"
+import { InMemoryLedger, rateLimit } from "@quorvel/core"
 import { createToolRunner } from "../src/index"
 
 const ledger = new InMemoryLedger()

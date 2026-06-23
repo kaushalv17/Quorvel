@@ -1,4 +1,4 @@
-import type { Policy } from "belay"
+import type { Policy } from "@quorvel/core"
 
 /** A single MCP content block (text/image/audio/resource/...). */
 export interface McpContent {
@@ -10,7 +10,7 @@ export interface McpContent {
 /**
  * The MCP `CallToolResult` shape (per the spec): a list of content blocks,
  * optional `structuredContent`, and an `isError` flag. This is what every MCP
- * tool handler resolves to and what Belay stores/replays for exactly-once.
+ * tool handler resolves to and what Quorvel stores/replays for exactly-once.
  */
 export interface CallToolResult {
 	content: McpContent[]
@@ -63,9 +63,9 @@ export interface McpServerLike {
  * and invocation context. Lets you scope budgets/approvals to a user, run, or
  * argument shape without re-wrapping the tool.
  */
-export type Resolvable<T, A = any> = T | ((args: A, ctx: BelayInvocationContext) => T)
+export type Resolvable<T, A = any> = T | ((args: A, ctx: QuorvelInvocationContext) => T)
 
-export interface BelayInvocationContext {
+export interface QuorvelInvocationContext {
 	/** The tool name as registered on the MCP server. */
 	toolName: string
 	/** The per-request `extra` the MCP SDK passed through, when available. */
@@ -87,15 +87,15 @@ export interface PolicyDeniedInfo<A = any> {
 
 /**
  * Reliability binding shared by every MCP adapter surface. Attach it once;
- * Belay derives the idempotency key, enforces policy, and records the action in
+ * Quorvel derives the idempotency key, enforces policy, and records the action in
  * the durable ledger on every call.
  */
-export interface BelayBinding<A = any> {
+export interface QuorvelBinding<A = any> {
 	/** Logical scope for idempotency + budgets/limits, e.g. `user-${id}`. Default: "global". */
 	scope?: Resolvable<string, A>
 	/** Cost charged against budgets for this call (e.g. dollars, tokens). Default: 0. */
 	cost?: Resolvable<number, A>
-	/** Belay policies (budget, rateLimit, requireApprovalWhen, denyWhen). Default: []. */
+	/** Quorvel policies (budget, rateLimit, requireApprovalWhen, denyWhen). Default: []. */
 	policies?: Resolvable<Policy[], A>
 	/** Custom CallToolResult returned when an action is parked for approval. */
 	onApprovalRequired?: (info: ApprovalPendingInfo<A>) => CallToolResult
@@ -106,11 +106,11 @@ export interface BelayBinding<A = any> {
 export function resolve<T, A>(
 	r: Resolvable<T, A> | undefined,
 	args: A,
-	ctx: BelayInvocationContext,
+	ctx: QuorvelInvocationContext,
 	fallback: T,
 ): T {
 	if (r === undefined) return fallback
-	return typeof r === "function" ? (r as (args: A, ctx: BelayInvocationContext) => T)(args, ctx) : r
+	return typeof r === "function" ? (r as (args: A, ctx: QuorvelInvocationContext) => T)(args, ctx) : r
 }
 
 /** Wrap a plain marker object into a valid MCP `CallToolResult`. The marker is

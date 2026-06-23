@@ -1,8 +1,8 @@
 {
-  "name": "@belay/dashboard",
+  "name": "@quorvel/dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Belay approvals dashboard \u2014 Next.js App Router UI over the Belay Cloud REST API: live awaiting-approval queue, approve/reject, and per-agent action timelines.",
+  "description": "Quorvel approvals dashboard \u2014 Next.js App Router UI over the Quorvel Cloud REST API: live awaiting-approval queue, approve/reject, and per-agent action timelines.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,7 @@
    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@belay/cloud-api": "workspace:*",
+    "@quorvel/cloud-api": "workspace:*",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

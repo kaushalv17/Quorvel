@@ -139,9 +139,9 @@ async function execute<T>(
 /** Approve a parked action. The next run() with the same args will execute it. */
 export async function approve(ledger: LedgerStore, key: string): Promise<void> {
   const rec = await ledger.get(key)
-  if (!rec) throw new Error(`Belay: no action found for key ${key}`)
+  if (!rec) throw new Error(`Quorvel: no action found for key ${key}`)
   if (rec.status !== "awaiting_approval") {
-    throw new Error(`Belay: action ${key} is not awaiting approval (status: ${rec.status})`)
+    throw new Error(`Quorvel: action ${key} is not awaiting approval (status: ${rec.status})`)
   }
   await ledger.markApproved(key)
 }
@@ -153,9 +153,9 @@ export async function reject(
   reason = "rejected by reviewer",
 ): Promise<void> {
   const rec = await ledger.get(key)
-  if (!rec) throw new Error(`Belay: no action found for key ${key}`)
+  if (!rec) throw new Error(`Quorvel: no action found for key ${key}`)
   if (rec.status !== "awaiting_approval") {
-    throw new Error(`Belay: action ${key} is not awaiting approval (status: ${rec.status})`)
+    throw new Error(`Quorvel: action ${key} is not awaiting approval (status: ${rec.status})`)
   }
   await ledger.markRejected(key, reason)
 }

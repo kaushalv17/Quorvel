@@ -1,4 +1,4 @@
-// Typed client for the Belay Cloud REST API. Pure TS (no React/Next) so it can
+// Typed client for the Quorvel Cloud REST API. Pure TS (no React/Next) so it can
 // be unit-tested with an injected fetch and reused by server components, server
 // actions, and route handlers alike. The default fetch is the global one.
 
@@ -52,29 +52,29 @@ export interface UsageSnapshot {
 	remaining: number
 }
 
-export interface BelayClientOptions {
+export interface QuorvelClientOptions {
 	baseUrl: string
 	apiKey: string
 	fetchImpl?: FetchLike
 }
 
-export class BelayApiError extends Error {
+export class QuorvelApiError extends Error {
 	constructor(
 		message: string,
 		readonly status: number,
 		readonly code?: string,
 	) {
 		super(message)
-		this.name = "BelayApiError"
+		this.name = "QuorvelApiError"
 	}
 }
 
-export class BelayClient {
+export class QuorvelClient {
 	private readonly baseUrl: string
 	private readonly apiKey: string
 	private readonly fetchImpl: FetchLike
 
-	constructor(opts: BelayClientOptions) {
+	constructor(opts: QuorvelClientOptions) {
 		this.baseUrl = opts.baseUrl.replace(/\/$/, "")
 		this.apiKey = opts.apiKey
 		this.fetchImpl = opts.fetchImpl ?? globalFetch
@@ -100,7 +100,7 @@ export class BelayClient {
 			} catch {
 				/* non-JSON error body */
 			}
-			throw new BelayApiError(message, res.status, code)
+			throw new QuorvelApiError(message, res.status, code)
 		}
 		if (res.status === 204) return undefined as T
 		return (await res.json()) as T

@@ -1,5 +1,5 @@
 /**
- * @belay/langchain test suite. Run with: node ../../node_modules/.bin/tsx test/langchain.test.ts
+ * @quorvel/langchain test suite. Run with: node ../../node_modules/.bin/tsx test/langchain.test.ts
  * (Sandbox: belay + @langchain/* are mocked under node_modules.)
  */
 import assert from "node:assert/strict"
@@ -13,10 +13,10 @@ import {
 	rateLimit,
 	requireApprovalWhen,
 	denyWhen,
-} from "belay"
+} from "@quorvel/core"
 import {
-	withBelay,
-	withBelayAll,
+	withQuorvel,
+	withQuorvelAll,
 	createToolRunner,
 	guard,
 } from "../src/index.ts"
@@ -47,17 +47,17 @@ const parse = (m: ToolMessage) => {
 const aiWith = (calls: any[]) => new AIMessage({ content: "", tool_calls: calls })
 
 await (async () => {
-	console.log("@belay/langchain\n")
+	console.log("@quorvel/langchain\n")
 
-	// 1. withBelay preserves the LangChain tool contract (name/description/schema).
-	await test("withBelay preserves name, description, and schema", async () => {
+	// 1. withQuorvel preserves the LangChain tool contract (name/description/schema).
+	await test("withQuorvel preserves name, description, and schema", async () => {
 		const ledger = new InMemoryLedger()
 		const base = tool(async ({ x }: any) => ({ doubled: x * 2 }), {
 			name: "double",
 			description: "Doubles a number",
 			schema: { kind: "zod-ish" },
 		})
-		const guarded = withBelay(ledger, base)
+		const guarded = withQuorvel(ledger, base)
 		assert.equal(guarded.name, "double")
 		assert.equal(guarded.description, "Doubles a number")
 		assert.deepEqual(guarded.schema, { kind: "zod-ish" })
@@ -76,7 +76,7 @@ await (async () => {
 			},
 			{ name: "charge", description: "Charge", schema: {} },
 		)
-		const guarded = withBelay(ledger, base)
+		const guarded = withQuorvel(ledger, base)
 		const a = await guarded.func!({ id: "order-1" })
 		const b = await guarded.func!({ id: "order-1" })
 		assert.equal(calls, 1, "underlying tool must run exactly once")
@@ -96,7 +96,7 @@ await (async () => {
 			},
 			{ name: "refund", description: "Refund", schema: {} },
 		)
-		const guarded = withBelay(ledger, base, {
+		const guarded = withQuorvel(ledger, base, {
 			policies: [requireApprovalWhen((c: any) => c.cost > 100, "refund over $100")],
 			cost: (a: any) => a.amount,
 		})
@@ -120,7 +120,7 @@ await (async () => {
 			description: "Weather",
 			schema: {},
 		})
-		const node = new ToolNode([withBelay(ledger, base)])
+		const node = new ToolNode([withQuorvel(ledger, base)])
 		const { messages } = await node.invoke({
 			messages: [aiWith([{ name: "get_weather", args: { city: "NYC" }, id: "call_1", type: "tool_call" }])],
 		})
@@ -209,12 +209,12 @@ await (async () => {
 		assert.equal(parse(msg)._belay, "error")
 	})
 
-	// 10. withBelayAll wraps every tool; guard() handles a raw handler with denyWhen.
-	await test("withBelayAll wraps all tools and guard() handles raw handlers", async () => {
+	// 10. withQuorvelAll wraps every tool; guard() handles a raw handler with denyWhen.
+	await test("withQuorvelAll wraps all tools and guard() handles raw handlers", async () => {
 		const ledger = new InMemoryLedger()
 		const t1 = tool(async () => ({ a: 1 }), { name: "t1", description: "", schema: {} })
 		const t2 = tool(async () => ({ b: 2 }), { name: "t2", description: "", schema: {} })
-		const [g1, g2] = withBelayAll(ledger, [t1, t2])
+		const [g1, g2] = withQuorvelAll(ledger, [t1, t2])
 		assert.deepEqual([g1.name, g2.name], ["t1", "t2"])
 		assert.deepEqual(await g1.func!({}), { a: 1 })
 

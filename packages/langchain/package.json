@@ -1,7 +1,7 @@
 {
-  "name": "@belay/langchain",
+  "name": "@quorvel/langchain",
   "version": "0.6.1",
-  "description": "Belay reliability adapter for LangChain JS & LangGraph: exactly-once tool execution, durable ledger, budgets, rate limits, and human approval gates.",
+  "description": "Quorvel reliability adapter for LangChain JS & LangGraph: exactly-once tool execution, durable ledger, budgets, rate limits, and human approval gates.",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -34,7 +34,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "belay": "workspace:*"
+    "@quorvel/core": "workspace:*"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.2.0",

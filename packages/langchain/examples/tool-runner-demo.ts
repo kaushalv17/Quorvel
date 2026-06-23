@@ -7,7 +7,7 @@
  */
 import { tool } from "@langchain/core/tools"
 import { AIMessage } from "@langchain/core/messages"
-import { InMemoryLedger, rateLimit } from "belay"
+import { InMemoryLedger, rateLimit } from "@quorvel/core"
 import { createToolRunner } from "../src/index.ts"
 
 const ledger = new InMemoryLedger()

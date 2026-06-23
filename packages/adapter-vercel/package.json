@@ -1,7 +1,7 @@
 {
-	"name": "@belay/adapter-vercel",
+	"name": "@quorvel/adapter-vercel",
 	"version": "0.6.0",
-	"description": "Belay reliability adapter for the Vercel AI SDK — idempotency, retries, budgets, and human approvals for tool calls.",
+	"description": "Quorvel reliability adapter for the Vercel AI SDK — idempotency, retries, budgets, and human approvals for tool calls.",
 	"type": "module",
 	"main": "dist/index.js",
 	"module": "dist/index.js",

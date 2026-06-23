@@ -1,8 +1,8 @@
 {
-  "name": "@belay/cloud-api",
+  "name": "@quorvel/cloud-api",
   "version": "0.7.0",
   "private": true,
-  "description": "Belay Cloud: hosted reliability ledger \u2014 Fastify REST API implementing the @belay/core LedgerStore contract over Postgres, with API-key auth, per-org isolation, BullMQ/Redis event ingest, alerting, and Stripe metered billing.",
+  "description": "Quorvel Cloud: hosted reliability ledger \u2014 Fastify REST API implementing the @quorvel/core LedgerStore contract over Postgres, with API-key auth, per-org isolation, BullMQ/Redis event ingest, alerting, and Stripe metered billing.",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {

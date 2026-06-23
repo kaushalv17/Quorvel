@@ -1,5 +1,5 @@
 /**
- * The durable ledger: a record of every action Belay has seen, keyed by its
+ * The durable ledger: a record of every action Quorvel has seen, keyed by its
  * idempotency key. It answers "have we already done this?" and powers budgets,
  * rate limits, and the approval queue.
  */

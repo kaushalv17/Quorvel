@@ -1,4 +1,4 @@
-// Durable Postgres-backed Store. Mirrors @belay/core's PostgresLedger SQL
+// Durable Postgres-backed Store. Mirrors @quorvel/core's PostgresLedger SQL
 // (atomic ON CONFLICT insert, attempts++ on running, stats exclusions), with an
 // extra org_id tenant dimension on every query. Not exercised in the sandbox
 // (no DB); verified on the machine.

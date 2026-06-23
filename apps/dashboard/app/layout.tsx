@@ -3,8 +3,8 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 
 export const metadata = {
-	title: "Belay — Approvals",
-	description: "Live approval queue and per-agent action timeline for Belay.",
+	title: "Quorvel — Approvals",
+	description: "Live approval queue and per-agent action timeline for Quorvel.",
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body>
 				<header className="topbar">
 					<Link href="/" className="brand">
-						<span className="brand-mark">belay</span>
+						<span className="brand-mark">Quorvel</span>
 						<span className="brand-sub">control plane</span>
 					</Link>
 					<nav className="nav">

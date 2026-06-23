@@ -1,4 +1,4 @@
-import type { ActionStatus } from "../lib/belay"
+import type { ActionStatus } from "../lib/quorvel"
 
 const LABELS: Record<ActionStatus, string> = {
 	pending: "pending",

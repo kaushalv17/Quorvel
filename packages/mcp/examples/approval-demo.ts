@@ -10,17 +10,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 import {
-	registerBelayTool,
+	registerQuorvelTool,
 	InMemoryLedger,
 	listPendingApprovals,
 	approve,
 	requireApprovalWhen,
-} from "@belay/mcp"
+} from "@quorvel/mcp"
 
 const ledger = new InMemoryLedger()
 const server = new McpServer({ name: "ops", version: "1.0.0" })
 
-registerBelayTool(
+registerQuorvelTool(
 	server,
 	ledger,
 	"delete_account",

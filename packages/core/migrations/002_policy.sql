@@ -1,4 +1,4 @@
--- Belay Phase 2: policy layer (budgets, rate limits, approvals)
+-- Quorvel Phase 2: policy layer (budgets, rate limits, approvals)
 -- Safe to run on an existing belay_actions table.
 
 alter table belay_actions add column if not exists cost double precision not null default 0;

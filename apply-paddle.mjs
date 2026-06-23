@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// apply-paddle.mjs — wires the Paddle billing module into the Belay cloud API.
+// apply-paddle.mjs — wires the Paddle billing module into the Quorvel cloud API.
 //
 // Run from the repo ROOT:   node apply-paddle.mjs
 //

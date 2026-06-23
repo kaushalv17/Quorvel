@@ -8,8 +8,8 @@ services:
     environment:
       DATABASE_URL: postgres://belay:belay@postgres:5432/belay
       REDIS_URL: redis://redis:6379
-      BELAY_QUEUE_NAME: belay-events
-      BELAY_ADMIN_SECRET: dev-admin-secret
+      QUORVEL_QUEUE_NAME: belay-events
+      QUORVEL_ADMIN_SECRET: dev-admin-secret
       PORT: "8080"
     depends_on:
       postgres:

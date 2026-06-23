@@ -1,7 +1,7 @@
 // Framework-agnostic HTTP router. This is the SINGLE source of request handling:
 // both the Fastify adapter (server.ts) and the HostedLedger round-trip tests
 // call handleRequest, so the code under test is the code that runs.
-import { ApiError, BelayCloudService } from "./service"
+import { ApiError, QuorvelCloudService } from "./service"
 import type { ActionStatus } from "./types"
 
 export interface RawRequest {
@@ -21,7 +21,7 @@ export interface RawResponse {
 const notFound: RawResponse = { status: 404, body: { error: "not found", code: "not_found" } }
 
 export async function handleRequest(
-	svc: BelayCloudService,
+	svc: QuorvelCloudService,
 	adminSecret: string | undefined,
 	req: RawRequest,
 ): Promise<RawResponse> {

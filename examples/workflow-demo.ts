@@ -1,5 +1,5 @@
 /**
- * Belay Phase 4 demo: a durable "deep research" agent workflow that SURVIVES A
+ * Quorvel Phase 4 demo: a durable "deep research" agent workflow that SURVIVES A
  * CRASH. The workflow:
  *   plan -> gather -> sleep (rate-limit cooldown) -> wait for human approval -> publish
  *

@@ -1,5 +1,5 @@
 /**
- * @belay/mcp test suite. Run with: node ../../node_modules/.bin/tsx test/mcp.test.ts
+ * @quorvel/mcp test suite. Run with: node ../../node_modules/.bin/tsx test/mcp.test.ts
  * (Sandbox: belay + @modelcontextprotocol/sdk are mocked under node_modules.)
  *
  * NOTE: the real MCP `McpServer` exposes no public way to introspect or invoke
@@ -19,13 +19,13 @@ import {
 	rateLimit,
 	requireApprovalWhen,
 	denyWhen,
-} from "belay"
+} from "@quorvel/core"
 import {
 	guard,
-	withBelay,
-	withBelayAll,
-	registerBelayTool,
-	withBelayServer,
+	withQuorvel,
+	withQuorvelAll,
+	registerQuorvelTool,
+	withQuorvelServer,
 } from "../src/index.ts"
 
 let passed = 0
@@ -77,13 +77,13 @@ class SpyServer {
 }
 
 await (async () => {
-	console.log("@belay/mcp\n")
+	console.log("@quorvel/mcp\n")
 
-	// 1. withBelay preserves the MCP tool contract (name/config) and returns a
+	// 1. withQuorvel preserves the MCP tool contract (name/config) and returns a
 	//    valid CallToolResult unchanged on the happy path.
-	await test("withBelay preserves name, config, and CallToolResult", async () => {
+	await test("withQuorvel preserves name, config, and CallToolResult", async () => {
 		const ledger = new InMemoryLedger()
-		const guarded = withBelay(ledger, {
+		const guarded = withQuorvel(ledger, {
 			name: "double",
 			config: { description: "Doubles a number", inputSchema: { kind: "zod-ish" } },
 			handler: async ({ x }: any) => ok({ doubled: x * 2 }),
@@ -143,14 +143,14 @@ await (async () => {
 		assert.equal(sideEffects, 1, "runs exactly once after approval")
 	})
 
-	// 4. registerBelayTool is a drop-in for server.registerTool: it returns the
+	// 4. registerQuorvelTool is a drop-in for server.registerTool: it returns the
 	//    SDK handle and registers a GUARDED handler (verified by invoking the
 	//    captured handler). No SDK-private introspection is used.
-	await test("registerBelayTool registers a guarded tool", async () => {
+	await test("registerQuorvelTool registers a guarded tool", async () => {
 		const ledger = new InMemoryLedger()
 		const spy = new SpyServer()
 		let runs = 0
-		const handle = registerBelayTool(
+		const handle = registerQuorvelTool(
 			spy as any,
 			ledger,
 			"get_weather",
@@ -168,34 +168,34 @@ await (async () => {
 		assert.deepEqual(marker(res), { temp: 72, city: "NYC" })
 		// guard is active on the registered handler
 		await captured!.handler({ city: "NYC" })
-		assert.equal(runs, 1, "registered handler is Belay-guarded (exactly-once)")
+		assert.equal(runs, 1, "registered handler is Quorvel-guarded (exactly-once)")
 
 		// Smoke: the same call path works against a real McpServer without throwing.
 		const server = new McpServer({ name: "test", version: "0.0.0" })
-		const realHandle = registerBelayTool(
+		const realHandle = registerQuorvelTool(
 			server,
 			ledger,
 			"noop",
 			{ description: "", inputSchema: {} },
 			async () => ok({ ok: true }),
 		)
-		assert.ok(realHandle, "registerBelayTool returns a handle from a real McpServer")
+		assert.ok(realHandle, "registerQuorvelTool returns a handle from a real McpServer")
 	})
 
-	// 5. withBelayServer guards EVERY registerTool call on a server while passing
+	// 5. withQuorvelServer guards EVERY registerTool call on a server while passing
 	//    other members straight through. Behavior verified via a spy; proxy
 	//    integrity verified against a real McpServer.
-	await test("withBelayServer guards every registered tool", async () => {
+	await test("withQuorvelServer guards every registered tool", async () => {
 		const ledger = new InMemoryLedger()
 
 		// (a) Proxy works against a real McpServer: registerTool returns a handle.
-		const realServer = withBelayServer(new McpServer({ name: "test", version: "0.0.0" }), ledger)
+		const realServer = withQuorvelServer(new McpServer({ name: "test", version: "0.0.0" }), ledger)
 		const handle = realServer.registerTool("real_tool", { description: "", inputSchema: {} }, async () => ok({ ok: true }))
 		assert.ok(handle, "registerTool through the proxy returns a handle")
 
 		// (b) Guarding + pass-through verified via a capturing spy server.
 		const spy = new SpyServer()
-		const server = withBelayServer(spy as any, ledger)
+		const server = withQuorvelServer(spy as any, ledger)
 		let aRuns = 0
 		server.registerTool("a", { description: "" } as any, (async () => {
 			aRuns++
@@ -274,11 +274,11 @@ await (async () => {
 		assert.deepEqual(a, b)
 	})
 
-	// 10. withBelayAll wraps every definition; guard() handles a raw handler with
+	// 10. withQuorvelAll wraps every definition; guard() handles a raw handler with
 	//     denyWhen, returning a denied CallToolResult.
-	await test("withBelayAll wraps all tools and guard() handles denyWhen", async () => {
+	await test("withQuorvelAll wraps all tools and guard() handles denyWhen", async () => {
 		const ledger = new InMemoryLedger()
-		const [g1, g2] = withBelayAll(ledger, [
+		const [g1, g2] = withQuorvelAll(ledger, [
 			{ name: "t1", handler: async () => ok({ a: 1 }) },
 			{ name: "t2", handler: async () => ok({ b: 2 }) },
 		])

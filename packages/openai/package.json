@@ -1,7 +1,7 @@
 {
-	"name": "@belay/openai",
+	"name": "@quorvel/openai",
 	"version": "0.6.1",
-	"description": "Belay adapter for OpenAI tool calls — exactly-once, durable, policy-gated reliability for the OpenAI Agents SDK and classic function calling.",
+	"description": "Quorvel adapter for OpenAI tool calls — exactly-once, durable, policy-gated reliability for the OpenAI Agents SDK and classic function calling.",
 	"type": "module",
 	"main": "dist/index.js",
 	"module": "dist/index.js",
@@ -19,7 +19,7 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
 	"dependencies": {
-		"belay": "workspace:*"
+		"@quorvel/core": "workspace:*"
 	},
 	"peerDependencies": {
 		"@openai/agents": "*",

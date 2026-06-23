@@ -1,13 +1,13 @@
-import type { Policy } from "belay"
+import type { Policy } from "@quorvel/core"
 
 /**
  * A value provided statically, or derived per-call from the tool's arguments and
  * invocation context. Lets you scope budgets/approvals to a user, run, or
  * argument shape without re-wrapping the tool.
  */
-export type Resolvable<T, A = any> = T | ((args: A, ctx: BelayInvocationContext) => T)
+export type Resolvable<T, A = any> = T | ((args: A, ctx: QuorvelInvocationContext) => T)
 
-export interface BelayInvocationContext {
+export interface QuorvelInvocationContext {
 	/** The tool name as registered with LangChain / called by the model. */
 	toolName: string
 	/** The provider tool-call id, when available (LangChain `tool_call.id`). */
@@ -33,15 +33,15 @@ export interface PolicyDeniedInfo<A = any> {
 
 /**
  * Reliability binding shared by every LangChain adapter surface. Attach it once;
- * Belay derives the idempotency key, enforces policy, and records the action in
+ * Quorvel derives the idempotency key, enforces policy, and records the action in
  * the durable ledger on every call.
  */
-export interface BelayBinding<A = any> {
+export interface QuorvelBinding<A = any> {
 	/** Logical scope for idempotency + budgets/limits, e.g. `user-${id}`. Default: "global". */
 	scope?: Resolvable<string, A>
 	/** Cost charged against budgets for this call (e.g. dollars, tokens). Default: 0. */
 	cost?: Resolvable<number, A>
-	/** Belay policies (budget, rateLimit, requireApprovalWhen, denyWhen). Default: []. */
+	/** Quorvel policies (budget, rateLimit, requireApprovalWhen, denyWhen). Default: []. */
 	policies?: Resolvable<Policy[], A>
 	/** Custom result returned to the model when an action is parked for approval. */
 	onApprovalRequired?: (info: ApprovalPendingInfo<A>) => unknown
@@ -52,11 +52,11 @@ export interface BelayBinding<A = any> {
 export function resolve<T, A>(
 	r: Resolvable<T, A> | undefined,
 	args: A,
-	ctx: BelayInvocationContext,
+	ctx: QuorvelInvocationContext,
 	fallback: T,
 ): T {
 	if (r === undefined) return fallback
-	return typeof r === "function" ? (r as (args: A, ctx: BelayInvocationContext) => T)(args, ctx) : r
+	return typeof r === "function" ? (r as (args: A, ctx: QuorvelInvocationContext) => T)(args, ctx) : r
 }
 
 /**

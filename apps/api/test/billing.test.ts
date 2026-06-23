@@ -11,7 +11,7 @@ import {
 } from "../src/billing"
 import type { FetchResponse } from "../src/alerts"
 import { InProcessBus } from "../src/bus"
-import { ApiError, BelayCloudService } from "../src/service"
+import { ApiError, QuorvelCloudService } from "../src/service"
 import { MemStore } from "../src/store"
 import type { DomainEvent } from "../src/events"
 
@@ -93,7 +93,7 @@ await (async () => {
 		const u = new MemUsageStore()
 		await u.increment("o", currentPeriod(), 1000) // hit free cap
 		const meter = new UsageMeter(u, plans("free"))
-		const svc = new BelayCloudService(new MemStore(), { limiter: meter })
+		const svc = new QuorvelCloudService(new MemStore(), { limiter: meter })
 		await assert.rejects(
 			() => svc.insertPending("o", { idempotencyKey: "k", scope: null, tool: "t" }),
 			(e: unknown) => e instanceof ApiError && e.statusCode === 402,
@@ -106,7 +106,7 @@ await (async () => {
 		const reporter = { report: async () => { reported++ } }
 		const meter = new UsageMeter(u, plans("free"), reporter)
 		const bus = new InProcessBus([meter.onEvent])
-		const svc = new BelayCloudService(new MemStore(), { bus, limiter: meter })
+		const svc = new QuorvelCloudService(new MemStore(), { bus, limiter: meter })
 		await svc.insertPending("o", { idempotencyKey: "a", scope: null, tool: "t" })
 		await svc.insertPending("o", { idempotencyKey: "b", scope: null, tool: "t" })
 		assert.equal(await u.get("o", currentPeriod()), 2)

@@ -1,12 +1,12 @@
-# @belay/openai
+# @quorvel/openai
 
 **Phase 6 · Part 2 — the OpenAI tool-calls adapter.**
 
-Wrap your OpenAI tool calls with Belay to get exactly-once execution, a durable
+Wrap your OpenAI tool calls with Quorvel to get exactly-once execution, a durable
 action ledger, budgets, rate limits, and human approval gates — without
 rewriting your agent. Works with **both** OpenAI surfaces:
 
-1. **OpenAI Agents SDK** (`@openai/agents`) → `withBelay` / `withBelayAll`
+1. **OpenAI Agents SDK** (`@openai/agents`) → `withQuorvel` / `withQuorvelAll`
 2. **Classic function calling** (Chat Completions / Responses) → `createToolRunner` / `guard`
 
 > Requires the `belay` core (Phases 1–4) for the ledger + policy engine.
@@ -14,20 +14,20 @@ rewriting your agent. Works with **both** OpenAI surfaces:
 ## Install
 
 ```bash
-pnpm add @belay/openai belay
+pnpm add @quorvel/openai belay
 ```
 
 ## 1) OpenAI Agents SDK
 
 ```ts
 import { Agent, tool } from "@openai/agents"
-import { PostgresLedger } from "belay"
-import { withBelay } from "@belay/openai"
-import { requireApprovalWhen } from "belay"
+import { PostgresLedger } from "@quorvel/core"
+import { withQuorvel } from "@quorvel/openai"
+import { requireApprovalWhen } from "@quorvel/core"
 
 const ledger = new PostgresLedger(pool)
 
-const refund = withBelay(ledger, tool({
+const refund = withQuorvel(ledger, tool({
   name: "refund",
   description: "Refund a charge",
   parameters: z.object({ chargeId: z.string(), amount: z.number() }),
@@ -50,8 +50,8 @@ crashing the loop. The real action stays durably parked until you `approve()` it
 
 ```ts
 import OpenAI from "openai"
-import { PostgresLedger, rateLimit } from "belay"
-import { createToolRunner } from "@belay/openai"
+import { PostgresLedger, rateLimit } from "@quorvel/core"
+import { createToolRunner } from "@quorvel/openai"
 
 const runner = createToolRunner(ledger, { refund, sendEmail }, {
   scope: (a) => `user-${a.userId}`,
@@ -82,7 +82,7 @@ so the conversation stays valid.
 ## Approvals inbox
 
 ```ts
-import { listPendingApprovals, approve, reject } from "@belay/openai"
+import { listPendingApprovals, approve, reject } from "@quorvel/openai"
 
 const inbox = await listPendingApprovals(ledger)
 await approve(ledger, inbox[0].idempotencyKey) // next tool call executes it, once
@@ -92,8 +92,8 @@ await approve(ledger, inbox[0].idempotencyKey) // next tool call executes it, on
 
 | Export | Surface | What it does |
 | --- | --- | --- |
-| `withBelay(ledger, tool, binding?)` | Agents SDK | Wrap one tool's `execute` with Belay |
-| `withBelayAll(ledger, tools, binding?)` | Agents SDK | Wrap an array of tools |
+| `withQuorvel(ledger, tool, binding?)` | Agents SDK | Wrap one tool's `execute` with Quorvel |
+| `withQuorvelAll(ledger, tools, binding?)` | Agents SDK | Wrap an array of tools |
 | `createToolRunner(ledger, handlers, options?)` | Function calling | Dispatch `tool_calls` → tool messages |
 | `guard(ledger, name, handler, binding?)` | Manual | Wrap a single handler you dispatch yourself |
 | `approve` / `reject` / `listPendingApprovals` | Both | Re-exported from core for convenience |
@@ -110,4 +110,4 @@ pnpm typecheck  # tsc --noEmit
 pnpm build      # emit dist/
 ```
 
-MIT · part of [Belay](https://github.com/) — *it catches your AI agent when it falls.*
+MIT · part of [Quorvel](https://github.com/) — *it catches your AI agent when it falls.*

@@ -1,5 +1,5 @@
 // Framework-agnostic business logic. Talks only to a Store. The action methods
-// are a 1:1 mapping of @belay/core's LedgerStore, scoped per org.
+// are a 1:1 mapping of @quorvel/core's LedgerStore, scoped per org.
 //
 // Two optional collaborators (both no-ops when absent, so the LedgerStore
 // contract is unchanged):
@@ -44,7 +44,7 @@ export interface ServiceDeps {
 	billing?: PaddleBilling
 }
 
-export class BelayCloudService {
+export class QuorvelCloudService {
 	private readonly bus?: EventBus
 	private readonly limiter?: UsageLimiter
 	private readonly billing?: PaddleBilling

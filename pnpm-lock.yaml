@@ -46,7 +46,7 @@ importers:
 
   apps/dashboard:
     dependencies:
-      '@belay/cloud-api':
+      '@quorvel/cloud-api':
         specifier: workspace:*
         version: link:../api
       next:
@@ -127,7 +127,7 @@ importers:
       '@langchain/langgraph':
         specifier: '>=0.2.0'
         version: 1.4.4(@langchain/core@1.2.0(@opentelemetry/api@1.9.1)(openai@6.44.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@4.4.3))(zod@4.4.3)
-      belay:
+      '@quorvel/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -143,7 +143,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: '>=1.0.0'
         version: 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
-      belay:
+      '@quorvel/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -159,7 +159,7 @@ importers:
       '@openai/agents':
         specifier: '*'
         version: 0.11.8(@cfworker/json-schema@4.1.1)(ws@8.21.0)(zod@4.4.3)
-      belay:
+      '@quorvel/core':
         specifier: workspace:*
         version: link:../core
       openai:

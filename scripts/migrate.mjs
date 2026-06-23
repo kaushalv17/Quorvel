@@ -1,4 +1,4 @@
-// Belay migration runner — applies every SQL migration in order, exactly once.
+// Quorvel migration runner — applies every SQL migration in order, exactly once.
 //
 // Usage:
 //   node --env-file=.env scripts/migrate.mjs            # apply pending migrations
@@ -88,7 +88,7 @@ async function main() {
     }
 
     if (STATUS) {
-      console.log("Belay migrations:\n")
+      console.log("Quorvel migrations:\n")
       for (const m of migrations) {
         const a = applied.get(m.name)
         if (!a) console.log(`  \u23f3 PENDING  ${m.name}`)
@@ -145,7 +145,7 @@ async function main() {
       }
     }
 
-    console.log(`\n\ud83c\udf89 Applied ${pending.length} migration(s). Belay schema is ready.`)
+    console.log(`\n\ud83c\udf89 Applied ${pending.length} migration(s). Quorvel schema is ready.`)
   } finally {
     client.release()
     await pool.end()

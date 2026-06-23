@@ -15,9 +15,9 @@ services:
           type: keyvalue
           name: belay-redis
           property: connectionString
-      - key: BELAY_QUEUE_NAME
+      - key: QUORVEL_QUEUE_NAME
         value: belay-events
-      - key: BELAY_ADMIN_SECRET
+      - key: QUORVEL_ADMIN_SECRET
         generateValue: true
       - key: PORT
         value: "8080"

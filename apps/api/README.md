@@ -1,14 +1,14 @@
-# @belay/cloud-api
+# @quorvel/cloud-api
 
-The hosted **Belay Cloud** ledger service — a Fastify REST API that implements
-`@belay/core`'s `LedgerStore` contract over Postgres, with API-key auth and
+The hosted **Quorvel Cloud** ledger service — a Fastify REST API that implements
+`@quorvel/core`'s `LedgerStore` contract over Postgres, with API-key auth and
 per-organization isolation. It is the server behind the SDK's hosted mode:
 
 ```ts
 // local
 const ledger = new InMemoryLedger()
 // hosted — the only change
-const ledger = new HostedLedger({ apiKey: process.env.BELAY_API_KEY! })
+const ledger = new HostedLedger({ apiKey: process.env.QUORVEL_API_KEY! })
 ```
 
 Because the API mirrors `LedgerStore` 1:1, the hosted backend behaves identically
@@ -22,7 +22,7 @@ SDK (HostedLedger) --HTTPS + API key--> Cloud API
                                           |
                               router.handleRequest  (framework-agnostic)
                                           |
-                                    BelayCloudService
+                                    QuorvelCloudService
                                           |
                                         Store
                                     /          \
@@ -45,10 +45,10 @@ SDK (HostedLedger) --HTTPS + API key--> Cloud API
 
 ```bash
 # in-memory (no DB) — great for a smoke test
-BELAY_ADMIN_SECRET=dev pnpm --filter @belay/cloud-api start
+QUORVEL_ADMIN_SECRET=dev pnpm --filter @quorvel/cloud-api start
 
 # with Postgres
-DATABASE_URL=postgres://... BELAY_ADMIN_SECRET=dev pnpm --filter @belay/cloud-api start
+DATABASE_URL=postgres://... QUORVEL_ADMIN_SECRET=dev pnpm --filter @quorvel/cloud-api start
 ```
 
 ## Endpoints
@@ -78,13 +78,13 @@ Transition routes are idempotent no-ops when the key does not exist, matching
 
 ## Auth
 
-Keys look like `bly_live_<random>`. Only the SHA-256 hash is stored; the
+Keys look like `qrv_live_<random>`. Only the SHA-256 hash is stored; the
 plaintext is shown once at creation. Requests send `Authorization: Bearer <key>`.
 Every row is scoped to the key's `org_id`, so tenants are isolated.
 
 ## Tests
 
 ```bash
-pnpm --filter @belay/cloud-api test       # service + router tests (MemStore)
-pnpm --filter @belay/cloud-api typecheck  # tsc --noEmit over src
+pnpm --filter @quorvel/cloud-api test       # service + router tests (MemStore)
+pnpm --filter @quorvel/cloud-api typecheck  # tsc --noEmit over src
 ```

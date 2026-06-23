@@ -1,5 +1,5 @@
 /**
- * Belay DB smoke test — proves the durable stores are REALLY backed by Postgres
+ * Quorvel DB smoke test — proves the durable stores are REALLY backed by Postgres
  * (Neon), not just in-memory.
  *
  * It runs a tiny workflow with PostgresWorkflowStore, then THROWS AWAY the

@@ -1,4 +1,4 @@
--- Belay durable ledger schema
+-- Quorvel durable ledger schema
 -- Run this once against your Postgres database (e.g. Neon).
 
 create table if not exists belay_actions (

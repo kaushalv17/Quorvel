@@ -1,6 +1,6 @@
-# @belay/dashboard
+# @quorvel/dashboard
 
-Approvals dashboard for **Belay** — a Next.js (App Router) UI built entirely on top of the `@belay/cloud-api` REST API.
+Approvals dashboard for **Quorvel** — a Next.js (App Router) UI built entirely on top of the `@quorvel/cloud-api` REST API.
 
 ## What it does
 
@@ -8,22 +8,22 @@ Approvals dashboard for **Belay** — a Next.js (App Router) UI built entirely o
 - **Per-agent timeline** — actions grouped by scope (agent), with a drill-down view of each agent's recent action history and statuses.
 - **Usage bar** — current billing period usage vs. plan limit, straight from `GET /v1/usage`.
 
-Everything is driven through the same REST surface shipped in `@belay/cloud-api` — no direct database access.
+Everything is driven through the same REST surface shipped in `@quorvel/cloud-api` — no direct database access.
 
 ## Configure
 
 Copy `.env.example` to `.env.local` and set:
 
 ```
-BELAY_API_URL=http://localhost:8080
-BELAY_API_KEY=bly_live_...   # minted via POST /v1/keys on the cloud API
+QUORVEL_API_URL=http://localhost:8080
+QUORVEL_API_KEY=qrv_live_...   # minted via POST /v1/keys on the cloud API
 ```
 
 ## Develop
 
 ```bash
 pnpm install
-pnpm --filter @belay/dashboard dev      # http://localhost:3000
+pnpm --filter @quorvel/dashboard dev      # http://localhost:3000
 ```
 
 ## Test & typecheck
@@ -32,15 +32,15 @@ The API client (`lib/belay.ts`) is covered by zero-dependency contract tests tha
 run against a fake `fetch`, so no network or running API is required:
 
 ```bash
-pnpm --filter @belay/dashboard test       # tsx test/lib.test.ts
-pnpm --filter @belay/dashboard typecheck  # tsc -p tsconfig.sandbox.json
+pnpm --filter @quorvel/dashboard test       # tsx test/lib.test.ts
+pnpm --filter @quorvel/dashboard typecheck  # tsc -p tsconfig.sandbox.json
 ```
 
 ## Layout
 
 | Path | Purpose |
 | --- | --- |
-| `lib/belay.ts` | Typed `BelayClient` (injectable fetch) + `groupByScope` |
+| `lib/belay.ts` | Typed `QuorvelClient` (injectable fetch) + `groupByScope` |
 | `lib/server-client.ts` | Server-only client built from env vars |
 | `app/page.tsx` | Approvals queue + usage bar |
 | `app/actions.ts` | `approve` / `reject` server actions |

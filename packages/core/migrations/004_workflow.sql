@@ -1,4 +1,4 @@
--- Belay durable workflow schema (Phase 4)
+-- Quorvel durable workflow schema (Phase 4)
 -- Run after 001_init.sql, 002_policy.sql and 003_saga.sql.
 
 create table if not exists belay_workflows (

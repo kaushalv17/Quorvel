@@ -1,7 +1,7 @@
 {
-  "name": "@belay/mcp",
+  "name": "@quorvel/mcp",
   "version": "0.6.1",
-  "description": "Belay reliability adapter for the Model Context Protocol (MCP) TypeScript SDK: exactly-once tool execution, durable ledger, budgets, rate limits, and human approval gates for MCP servers.",
+  "description": "Quorvel reliability adapter for the Model Context Protocol (MCP) TypeScript SDK: exactly-once tool execution, durable ledger, budgets, rate limits, and human approval gates for MCP servers.",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -34,7 +34,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "belay": "workspace:*"
+    "@quorvel/core": "workspace:*"
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": ">=1.0.0"

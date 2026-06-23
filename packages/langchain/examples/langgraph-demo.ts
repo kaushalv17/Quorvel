@@ -1,5 +1,5 @@
 /**
- * LangGraph demo: drop a Belay-guarded tool into a prebuilt ToolNode.
+ * LangGraph demo: drop a Quorvel-guarded tool into a prebuilt ToolNode.
  *
  * The tool keeps its name/description/schema, so nothing else in your graph
  * changes — but every execution is now idempotent, durably recorded, and
@@ -8,12 +8,12 @@
 import { tool } from "@langchain/core/tools"
 import { AIMessage } from "@langchain/core/messages"
 import { ToolNode } from "@langchain/langgraph/prebuilt"
-import { InMemoryLedger, approve, requireApprovalWhen } from "belay"
-import { withBelay } from "../src/index.ts"
+import { InMemoryLedger, approve, requireApprovalWhen } from "@quorvel/core"
+import { withQuorvel } from "../src/index.ts"
 
 const ledger = new InMemoryLedger()
 
-const refund = withBelay(
+const refund = withQuorvel(
 	ledger,
 	tool(async ({ chargeId, amount }: any) => ({ ok: true, chargeId, amount }), {
 		name: "refund",

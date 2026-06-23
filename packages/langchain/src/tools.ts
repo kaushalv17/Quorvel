@@ -1,9 +1,9 @@
 import { tool as createLcTool } from "@langchain/core/tools"
-import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "belay"
-import type { Ledger } from "belay"
+import { run, ApprovalRequiredError, PolicyDeniedError, listPendingApprovals } from "@quorvel/core"
+import type { Ledger } from "@quorvel/core"
 import {
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	resolve,
 	resolvePendingKey,
 	defaultPendingResult,
@@ -14,7 +14,7 @@ import {
  * The minimal shape we depend on from a LangChain tool (as produced by
  * `tool(func, { name, description, schema })` from `@langchain/core/tools`).
  * We read `name`/`description`/`schema` to preserve the drop-in contract and
- * call the tool to route the real work through Belay.
+ * call the tool to route the real work through Quorvel.
  */
 export interface LangChainToolLike {
 	name: string
@@ -33,7 +33,7 @@ export interface LangChainToolLike {
  * run-manager, NOT a RunnableConfig. We must therefore call it with `args`
  * ONLY; passing anything as the second argument makes LangChain try to call
  * `runManager.getChild()` and throw. We never have a real run-manager here
- * (Belay sits between the model and execution), so `undefined` is correct and
+ * (Quorvel sits between the model and execution), so `undefined` is correct and
  * safe. For class-based tools without an exposed `func`, we fall back to the
  * public `invoke(args)` (single-arg) which sets up its own run-manager.
  */
@@ -46,7 +46,7 @@ function makeExecutor(tool: LangChainToolLike): (args: any) => unknown | Promise
 }
 
 /**
- * Wrap a single LangChain tool so every invocation flows through Belay:
+ * Wrap a single LangChain tool so every invocation flows through Quorvel:
  * exactly-once idempotency, durable ledger, and policy (budgets / rate limits /
  * approval gates). The returned value is a real LangChain `DynamicStructuredTool`
  * with the **same name, description, and schema** — a drop-in you can hand to
@@ -54,10 +54,10 @@ function makeExecutor(tool: LangChainToolLike): (args: any) => unknown | Promise
  *
  * ```ts
  * import { tool } from "@langchain/core/tools"
- * import { PostgresLedger, requireApprovalWhen } from "belay"
- * import { withBelay } from "@belay/langchain"
+ * import { PostgresLedger, requireApprovalWhen } from "@quorvel/core"
+ * import { withQuorvel } from "@quorvel/langchain"
  *
- * const refund = withBelay(ledger, tool(
+ * const refund = withQuorvel(ledger, tool(
  *   async ({ chargeId, amount }) => stripe.refunds.create({ charge: chargeId, amount }),
  *   { name: "refund", description: "Refund a charge", schema: refundSchema },
  * ), {
@@ -67,17 +67,17 @@ function makeExecutor(tool: LangChainToolLike): (args: any) => unknown | Promise
  * })
  * ```
  */
-export function withBelay<T extends LangChainToolLike>(
+export function withQuorvel<T extends LangChainToolLike>(
 	ledger: Ledger,
 	tool: T,
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): T {
 	const name = tool.name
 	const execute = makeExecutor(tool)
 	// LangChain calls the wrapped function as (input, runManager?, config?).
 	// We accept input only and intentionally ignore the run-manager argument.
 	const wrapped = async (args: any) => {
-		const ctx: BelayInvocationContext = { toolName: name }
+		const ctx: QuorvelInvocationContext = { toolName: name }
 		try {
 			return await run(ledger, {
 				tool: name,
@@ -108,10 +108,10 @@ export function withBelay<T extends LangChainToolLike>(
 }
 
 /** Wrap many LangChain tools at once with the same binding. */
-export function withBelayAll<T extends LangChainToolLike>(
+export function withQuorvelAll<T extends LangChainToolLike>(
 	ledger: Ledger,
 	tools: T[],
-	binding: BelayBinding = {},
+	binding: QuorvelBinding = {},
 ): T[] {
-	return tools.map((t) => withBelay(ledger, t, binding))
+	return tools.map((t) => withQuorvel(ledger, t, binding))
 }

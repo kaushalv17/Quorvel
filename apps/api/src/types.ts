@@ -1,5 +1,5 @@
-// Core data model for the Belay Cloud API.
-// The action shape mirrors @belay/core's ActionRecord EXACTLY so HostedLedger
+// Core data model for the Quorvel Cloud API.
+// The action shape mirrors @quorvel/core's ActionRecord EXACTLY so HostedLedger
 // can consume API responses as ActionRecord with no translation.
 
 export type ActionStatus =
@@ -30,7 +30,7 @@ export interface ApiKeyRecord {
 	revokedAt?: string | null
 }
 
-/** Public action shape returned to clients — mirrors @belay/core ActionRecord. */
+/** Public action shape returned to clients — mirrors @quorvel/core ActionRecord. */
 export interface ActionRecord {
 	idempotencyKey: string
 	scope: string | null

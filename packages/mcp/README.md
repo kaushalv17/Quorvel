@@ -1,11 +1,11 @@
-# @belay/mcp
+# @quorvel/mcp
 
 Reliability adapter for the **Model Context Protocol** ([`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk)).
 
-MCP is becoming the universal way to expose tools to LLMs (Claude, IDEs, agents). But an MCP server tool is just a side effect waiting to happen twice: a model retries, a client reconnects, a stream replays — and your `charge_card` runs again. `@belay/mcp` wraps your MCP tool handlers so every `tools/call` is:
+MCP is becoming the universal way to expose tools to LLMs (Claude, IDEs, agents). But an MCP server tool is just a side effect waiting to happen twice: a model retries, a client reconnects, a stream replays — and your `charge_card` runs again. `@quorvel/mcp` wraps your MCP tool handlers so every `tools/call` is:
 
 - **Exactly-once** — identical calls (same tool + scope + args) execute the handler once and replay the stored `CallToolResult`.
-- **Durable** — every action is recorded in a Belay ledger (in-memory for dev, Postgres for prod).
+- **Durable** — every action is recorded in a Quorvel ledger (in-memory for dev, Postgres for prod).
 - **Policy-gated** — budgets, rate limits, and conditional `denyWhen` rules.
 - **Human-approvable** — risky actions are parked as `awaiting_approval` and resume after `approve()`.
 
@@ -14,17 +14,17 @@ Parked and denied actions come back as **valid `CallToolResult`s** (a structured
 ## Install
 
 ```bash
-pnpm add @belay/mcp @modelcontextprotocol/sdk
+pnpm add @quorvel/mcp @modelcontextprotocol/sdk
 ```
 
 ## Guard an entire server (one line)
 
 ```ts
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
-import { withBelayServer, InMemoryLedger, rateLimit, requireApprovalWhen } from "@belay/mcp"
+import { withQuorvelServer, InMemoryLedger, rateLimit, requireApprovalWhen } from "@quorvel/mcp"
 
 const ledger = new InMemoryLedger()
-const server = withBelayServer(new McpServer({ name: "billing", version: "1.0.0" }), ledger, {
+const server = withQuorvelServer(new McpServer({ name: "billing", version: "1.0.0" }), ledger, {
   scope: (a) => `user-${a.userId}`,
   cost: (a) => a.amountUsd ?? 0,
   policies: [
@@ -40,9 +40,9 @@ server.registerTool("charge_card", { description, inputSchema }, handler)
 ## Guard a single tool
 
 ```ts
-import { registerBelayTool, InMemoryLedger } from "@belay/mcp"
+import { registerQuorvelTool, InMemoryLedger } from "@quorvel/mcp"
 
-registerBelayTool(server, ledger, "charge_card", { description, inputSchema }, handler, {
+registerQuorvelTool(server, ledger, "charge_card", { description, inputSchema }, handler, {
   scope: (a) => `user-${a.userId}`,
 })
 ```
@@ -50,14 +50,14 @@ registerBelayTool(server, ledger, "charge_card", { description, inputSchema }, h
 or wrap the handler yourself with `guard()`:
 
 ```ts
-import { guard } from "@belay/mcp"
+import { guard } from "@quorvel/mcp"
 server.registerTool("charge_card", config, guard(ledger, "charge_card", handler, binding))
 ```
 
 ## Human-in-the-loop
 
 ```ts
-import { listPendingApprovals, approve } from "@belay/mcp"
+import { listPendingApprovals, approve } from "@quorvel/mcp"
 
 const pending = await listPendingApprovals(ledger)
 await approve(ledger, pending[0].idempotencyKey)
@@ -78,16 +78,16 @@ A parked call returns:
 
 | Export | Purpose |
 | --- | --- |
-| `withBelayServer(server, ledger, binding?)` | Proxy an `McpServer` so every `registerTool` is guarded. |
-| `registerBelayTool(server, ledger, name, config, handler, binding?)` | Register one guarded tool (drop-in for `server.registerTool`). |
-| `withBelay(ledger, { name, config, handler }, binding?)` | Wrap a portable tool definition. |
-| `withBelayAll(ledger, defs, binding?)` | Wrap an array of definitions. |
+| `withQuorvelServer(server, ledger, binding?)` | Proxy an `McpServer` so every `registerTool` is guarded. |
+| `registerQuorvelTool(server, ledger, name, config, handler, binding?)` | Register one guarded tool (drop-in for `server.registerTool`). |
+| `withQuorvel(ledger, { name, config, handler }, binding?)` | Wrap a portable tool definition. |
+| `withQuorvelAll(ledger, defs, binding?)` | Wrap an array of definitions. |
 | `guard(ledger, name, handler, binding?)` | Wrap a raw `(args, extra) => CallToolResult` handler. |
 | `approve` / `reject` / `listPendingApprovals` | Manage the durable approvals inbox. |
 | `budget` / `rateLimit` / `requireApprovalWhen` / `denyWhen` | Policies. |
 | `InMemoryLedger` | Dev ledger (use `PostgresLedger` from `belay` in prod). |
 
-### `BelayBinding`
+### `QuorvelBinding`
 
 | Field | Type | Default |
 | --- | --- | --- |

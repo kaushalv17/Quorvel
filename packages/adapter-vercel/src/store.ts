@@ -1,7 +1,7 @@
 import type { ActionRecord, ApprovalRecord } from "./types.js"
 
 // Dependency-inversion port. The adapter only knows this interface; the real
-// Belay Postgres ledger, a Redis store, or the in-memory default all satisfy it.
+// Quorvel Postgres ledger, a Redis store, or the in-memory default all satisfy it.
 export interface ReliabilityStore {
 	getAction(key: string): Promise<ActionRecord | undefined>
 	putAction(rec: ActionRecord): Promise<void>

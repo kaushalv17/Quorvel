@@ -1,13 +1,13 @@
 // belay/openai — Phase 6 Part 2: the OpenAI tool-calls adapter.
 //
 // Two surfaces, one reliability layer:
-//   1. OpenAI Agents SDK (@openai/agents)  → withBelay / withBelayAll
+//   1. OpenAI Agents SDK (@openai/agents)  → withQuorvel / withQuorvelAll
 //   2. Classic function calling (Chat Completions / Responses) → createToolRunner / guard
 //
-// Both route every tool call through Belay's durable turnstile: exactly-once
+// Both route every tool call through Quorvel's durable turnstile: exactly-once
 // idempotency, the action ledger, budgets, rate limits, and human approval gates.
 
-export { withBelay, withBelayAll, type OpenAIAgentTool } from "./agents"
+export { withQuorvel, withQuorvelAll, type OpenAIAgentTool } from "./agents"
 export {
 	createToolRunner,
 	guard,
@@ -18,8 +18,8 @@ export {
 	type ResponsesToolMessage,
 } from "./functions"
 export {
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	type Resolvable,
 	type ApprovalPendingInfo,
 	type PolicyDeniedInfo,
@@ -29,4 +29,4 @@ export {
 
 // Re-export the approval-inbox helpers from core so callers can approve/reject
 // directly from `belay/openai` without a second import.
-export { approve, reject, listPendingApprovals } from "belay"
+export { approve, reject, listPendingApprovals } from "@quorvel/core"

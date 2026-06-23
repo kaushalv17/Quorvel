@@ -1,9 +1,9 @@
-/** Errors Belay throws so callers can react precisely (catch by type). */
+/** Errors Quorvel throws so callers can react precisely (catch by type). */
 
 export class DuplicateInFlightError extends Error {
   readonly key: string
   constructor(key: string) {
-    super(`Belay: an action with this idempotency key is already in flight (${key})`)
+    super(`Quorvel: an action with this idempotency key is already in flight (${key})`)
     this.name = "DuplicateInFlightError"
     this.key = key
   }
@@ -13,7 +13,7 @@ export class ApprovalRequiredError extends Error {
   readonly key: string
   readonly reason: string
   constructor(key: string, reason: string) {
-    super(`Belay: action requires approval — ${reason} [${key}]`)
+    super(`Quorvel: action requires approval — ${reason} [${key}]`)
     this.name = "ApprovalRequiredError"
     this.key = key
     this.reason = reason
@@ -24,7 +24,7 @@ export class PolicyDeniedError extends Error {
   readonly key: string
   readonly reason: string
   constructor(key: string, reason: string) {
-    super(`Belay: action denied by policy — ${reason} [${key}]`)
+    super(`Quorvel: action denied by policy — ${reason} [${key}]`)
     this.name = "PolicyDeniedError"
     this.key = key
     this.reason = reason
@@ -35,7 +35,7 @@ export class ActionRejectedError extends Error {
   readonly key: string
   readonly reason: string | null
   constructor(key: string, reason: string | null) {
-    super(`Belay: action was rejected${reason ? ` — ${reason}` : ""} [${key}]`)
+    super(`Quorvel: action was rejected${reason ? ` — ${reason}` : ""} [${key}]`)
     this.name = "ActionRejectedError"
     this.key = key
     this.reason = reason
@@ -53,7 +53,7 @@ export interface CompensationFailure {
 }
 
 /**
- * Thrown when a saga step failed but Belay successfully rolled back every
+ * Thrown when a saga step failed but Quorvel successfully rolled back every
  * previously-committed step. The system is in a clean, consistent state — the
  * business operation simply did not happen.
  */
@@ -70,7 +70,7 @@ export class SagaAbortedError extends Error {
     compensated: string[],
   ) {
     super(
-      `Belay: saga "${sagaId}" aborted at step "${failedStep}" — ${cause}. ` +
+      `Quorvel: saga "${sagaId}" aborted at step "${failedStep}" — ${cause}. ` +
         `Rolled back ${compensated.length} step(s).`,
     )
     this.name = "SagaAbortedError"
@@ -100,7 +100,7 @@ export class SagaCompensationError extends Error {
     failures: CompensationFailure[],
   ) {
     super(
-      `Belay: saga "${sagaId}" FAILED TO COMPENSATE after aborting at "${failedStep}". ` +
+      `Quorvel: saga "${sagaId}" FAILED TO COMPENSATE after aborting at "${failedStep}". ` +
         `${failures.length} compensation(s) stuck: ${failures
           .map((f) => f.step)
           .join(", ")}. Needs manual intervention.`,
@@ -126,7 +126,7 @@ export class SagaCompensationError extends Error {
  */
 export class WorkflowSuspended extends Error {
   constructor() {
-    super("Belay: workflow suspended (awaiting a durable timer or signal)")
+    super("Quorvel: workflow suspended (awaiting a durable timer or signal)")
     this.name = "WorkflowSuspended"
   }
 }
@@ -140,7 +140,7 @@ export class WorkflowFailedError extends Error {
   readonly workflowId: string
   readonly cause: string
   constructor(workflowId: string, cause: string) {
-    super(`Belay: workflow "${workflowId}" failed — ${cause}`)
+    super(`Quorvel: workflow "${workflowId}" failed — ${cause}`)
     this.name = "WorkflowFailedError"
     this.workflowId = workflowId
     this.cause = cause
@@ -165,7 +165,7 @@ export class WorkflowDeterminismError extends Error {
     actual: string,
   ) {
     super(
-      `Belay: non-deterministic workflow "${workflowId}" at step ${seq}: ` +
+      `Quorvel: non-deterministic workflow "${workflowId}" at step ${seq}: ` +
         `history recorded "${expected}" but the code issued "${actual}". ` +
         `The workflow changed incompatibly or used logic outside ctx.`,
     )

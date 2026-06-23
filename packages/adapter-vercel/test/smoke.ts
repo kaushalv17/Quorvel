@@ -1,7 +1,7 @@
 // Runtime smoke test. No `ai`/`zod` needed — tools are matched structurally.
 // Run:  tsx test/smoke.ts
 import assert from "node:assert"
-import { ApprovalRequiredError, createBelay } from "../src/index.js"
+import { ApprovalRequiredError, createQuorvel } from "../src/index.js"
 
 async function main() {
 	// 1) Retry: a flaky tool fails twice (transient), succeeds on attempt 3.
@@ -18,7 +18,7 @@ async function main() {
 			return { sum: args.x + 1, calls }
 		},
 	}
-	const belay = createBelay({ retry: { baseDelayMs: 1, maxDelayMs: 2 } })
+	const belay = createQuorvel({ retry: { baseDelayMs: 1, maxDelayMs: 2 } })
 	const tools = belay.wrap({ flaky })
 	const r1 = await tools.flaky.execute!({ x: 1 })
 	assert.equal(r1.sum, 2)
@@ -31,7 +31,7 @@ async function main() {
 
 	// 3) Approval gate (interrupt mode): first call throws, approve, re-run runs.
 	let approvalId = ""
-	const belay2 = createBelay({
+	const belay2 = createQuorvel({
 		perTool: { danger: { requiresApproval: true } },
 		onEvent: (e) => {
 			if (e.type === "approval_required") approvalId = e.approvalId!
@@ -55,7 +55,7 @@ async function main() {
 	assert.equal(dangerRan, 1, "executes exactly once after approval")
 
 	// 4) Budget: maxCalls caps successful calls across the toolset.
-	const belay3 = createBelay({ budget: { maxCalls: 1 } })
+	const belay3 = createQuorvel({ budget: { maxCalls: 1 } })
 	const t3 = belay3.wrap({
 		a: { execute: async (x: { i: number }) => x.i },
 	})

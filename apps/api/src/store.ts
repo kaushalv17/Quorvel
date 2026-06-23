@@ -1,5 +1,5 @@
 // Storage seam. MemStore (tests/local) + PgStore (prod, in pgStore.ts).
-// Action semantics mirror @belay/core's LedgerStore / InMemoryLedger so the
+// Action semantics mirror @quorvel/core's LedgerStore / InMemoryLedger so the
 // hosted backend behaves identically to the in-process one.
 import type {
 	ActionRecord,

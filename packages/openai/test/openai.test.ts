@@ -6,8 +6,8 @@ import {
 	budget,
 	rateLimit,
 	requireApprovalWhen,
-} from "belay"
-import { withBelay, withBelayAll } from "../src/agents"
+} from "@quorvel/core"
+import { withQuorvel, withQuorvelAll } from "../src/agents"
 import { createToolRunner, guard } from "../src/functions"
 
 type Test = { name: string; fn: () => Promise<void> }
@@ -18,7 +18,7 @@ const test = (name: string, fn: () => Promise<void>) => tests.push({ name, fn })
 test("agents: exactly-once dedupe on repeated identical call", async () => {
 	const ledger = new InMemoryLedger()
 	let calls = 0
-	const tool = withBelay(ledger, {
+	const tool = withQuorvel(ledger, {
 		name: "refund",
 		execute: (a: { chargeId: string; amount: number }) => {
 			calls++
@@ -38,7 +38,7 @@ test("agents: exactly-once dedupe on repeated identical call", async () => {
 test("agents: approval gate parks then runs once after approve()", async () => {
 	const ledger = new InMemoryLedger()
 	let calls = 0
-	const tool = withBelay(
+	const tool = withQuorvel(
 		ledger,
 		{ name: "refund", execute: (_a: any) => { calls++; return { ok: true } } },
 		{
@@ -153,11 +153,11 @@ test("guard: single handler wrapper is exactly-once", async () => {
 	assert.equal(calls, 1)
 })
 
-// 10. withBelayAll wraps multiple tools.
-test("agents: withBelayAll wraps every tool", async () => {
+// 10. withQuorvelAll wraps multiple tools.
+test("agents: withQuorvelAll wraps every tool", async () => {
 	const ledger = new InMemoryLedger()
 	let a = 0, b = 0
-	const [t1, t2] = withBelayAll(ledger, [
+	const [t1, t2] = withQuorvelAll(ledger, [
 		{ name: "alpha", execute: (_a: any) => { a++; return "a" } },
 		{ name: "beta", execute: (_a: any) => { b++; return "b" } },
 	])

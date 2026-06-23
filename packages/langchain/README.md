@@ -1,6 +1,6 @@
-# @belay/langchain
+# @quorvel/langchain
 
-Belay reliability adapter for **LangChain JS** and **LangGraph**.
+Quorvel reliability adapter for **LangChain JS** and **LangGraph**.
 
 Wrap your existing tools and every invocation gains:
 
@@ -13,26 +13,26 @@ It's a drop-in: the wrapped tool keeps its `name`, `description`, and `schema`, 
 ## Install
 
 ```bash
-pnpm add @belay/langchain belay @langchain/core @langchain/langgraph
+pnpm add @quorvel/langchain belay @langchain/core @langchain/langgraph
 ```
 
 `@langchain/core` and `@langchain/langgraph` are optional peer dependencies — install whichever your app already uses.
 
 ## Two ways to use it
 
-### 1. Wrap tools (`withBelay` / `withBelayAll`)
+### 1. Wrap tools (`withQuorvel` / `withQuorvelAll`)
 
 Best when you hand tools to LangGraph's prebuilt `ToolNode` or `createReactAgent`.
 
 ```ts
 import { tool } from "@langchain/core/tools"
 import { ToolNode } from "@langchain/langgraph/prebuilt"
-import { PostgresLedger, requireApprovalWhen } from "belay"
-import { withBelay } from "@belay/langchain"
+import { PostgresLedger, requireApprovalWhen } from "@quorvel/core"
+import { withQuorvel } from "@quorvel/langchain"
 
 const ledger = new PostgresLedger(process.env.DATABASE_URL!)
 
-const refund = withBelay(
+const refund = withQuorvel(
   ledger,
   tool(async ({ chargeId, amount }) => stripe.refunds.create({ charge: chargeId, amount }), {
     name: "refund",
@@ -53,7 +53,7 @@ When a policy parks an action, the model receives a structured `awaiting_approva
 result (instead of an exception) so your graph keeps running. Resolve it later:
 
 ```ts
-import { listPendingApprovals, approve } from "@belay/langchain"
+import { listPendingApprovals, approve } from "@quorvel/langchain"
 
 for (const p of await listPendingApprovals(ledger)) {
   await approve(ledger, p.idempotencyKey)
@@ -66,8 +66,8 @@ Best when you dispatch tool calls yourself. Turns an AIMessage's `tool_calls`
 into ready-to-append `ToolMessage`s, with dedupe and policy built in.
 
 ```ts
-import { createToolRunner } from "@belay/langchain"
-import { rateLimit } from "belay"
+import { createToolRunner } from "@quorvel/langchain"
+import { rateLimit } from "@quorvel/core"
 
 const runner = createToolRunner(ledger, [search, sendEmail], {
   scope: (a) => `user-${a.userId}`,
@@ -81,7 +81,7 @@ const nextState = { messages: [...state.messages, ...toolMessages] }
 For a single hand-routed handler, use `guard`:
 
 ```ts
-import { guard } from "@belay/langchain"
+import { guard } from "@quorvel/langchain"
 
 const transfer = guard(ledger, "transfer", doTransfer, {
   policies: [denyWhen((c) => c.args.amount > 10_000, "over limit")],
@@ -103,7 +103,7 @@ Policy precedence is **deny > require_approval > allow**.
 
 ## API
 
-- `withBelay(ledger, tool, binding?)` / `withBelayAll(ledger, tools, binding?)`
+- `withQuorvel(ledger, tool, binding?)` / `withQuorvelAll(ledger, tools, binding?)`
 - `createToolRunner(ledger, tools, options?)` → `{ runToolCall, runToolCalls, runFromMessage }`
 - `guard(ledger, name, handler, binding?)`
 - Re-exported from `belay`: `approve`, `reject`, `listPendingApprovals`

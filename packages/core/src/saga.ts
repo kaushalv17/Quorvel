@@ -26,7 +26,7 @@ export interface StepDefinition<TOut = unknown> {
   do: (ctx: SagaContext) => Promise<TOut>
   /**
    * The compensation. Given the exact output do() returned, undo its effect.
-   * Belay guarantees at-most-once, but write it to tolerate a retry anyway.
+   * Quorvel guarantees at-most-once, but write it to tolerate a retry anyway.
    * Omit for steps with no side effect to undo.
    */
   undo?: (output: TOut, ctx: SagaContext) => Promise<void>

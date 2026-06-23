@@ -4,7 +4,7 @@
 // real `fastify` types identically.
 import Fastify from "fastify"
 import { handleRequest } from "./router"
-import { BelayCloudService, type ServiceDeps } from "./service"
+import { QuorvelCloudService, type ServiceDeps } from "./service"
 import type { Store } from "./store"
 
 export interface ServerOptions {
@@ -29,8 +29,8 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
 		},
 	)
 
-	const svc = new BelayCloudService(store, opts.deps)
-	const adminSecret = opts.adminSecret ?? process.env.BELAY_ADMIN_SECRET
+	const svc = new QuorvelCloudService(store, opts.deps)
+	const adminSecret = opts.adminSecret ?? process.env.QUORVEL_ADMIN_SECRET
 
 	app.all("/*", async (req: any, reply: any) => {
 		const url: string = req.url ?? "/"

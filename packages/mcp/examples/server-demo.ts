@@ -1,7 +1,7 @@
 /**
- * Example: protect an entire MCP server in one line with `withBelayServer`.
+ * Example: protect an entire MCP server in one line with `withQuorvelServer`.
  *
- * Every tool you register is automatically Belay-guarded: exactly-once
+ * Every tool you register is automatically Quorvel-guarded: exactly-once
  * `tools/call`, durable ledger, rate limiting, and approval gates — with no
  * change to your handlers, which keep returning native `CallToolResult`s.
  *
@@ -11,11 +11,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
-import { withBelayServer, InMemoryLedger, rateLimit, requireApprovalWhen } from "@belay/mcp"
+import { withQuorvelServer, InMemoryLedger, rateLimit, requireApprovalWhen } from "@quorvel/mcp"
 
 const ledger = new InMemoryLedger() // swap for PostgresLedger in production
 
-const server = withBelayServer(new McpServer({ name: "billing", version: "1.0.0" }), ledger, {
+const server = withQuorvelServer(new McpServer({ name: "billing", version: "1.0.0" }), ledger, {
 	// One binding guards every tool registered below.
 	scope: (args: any) => `user-${args.userId ?? "anon"}`,
 	cost: (args: any) => args.amountUsd ?? 0,

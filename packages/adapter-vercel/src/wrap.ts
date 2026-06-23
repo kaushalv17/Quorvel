@@ -29,7 +29,7 @@ import type {
 	VercelLikeTool,
 } from "./types.js"
 
-export interface BelayOptions {
+export interface QuorvelOptions {
 	/** Reliability store. Defaults to a process-local InMemoryStore. */
 	store?: ReliabilityStore
 	/** Retry policy overrides (merged over defaults). */
@@ -64,7 +64,7 @@ interface Ctx {
 	now: () => number
 }
 
-function buildCtx(o: BelayOptions = {}): Ctx {
+function buildCtx(o: QuorvelOptions = {}): Ctx {
 	return {
 		store: o.store ?? new InMemoryStore(),
 		retry: {
@@ -322,7 +322,7 @@ function wrapExecute(
 	}
 }
 
-function policyFor(o: BelayOptions, name: string): ToolPolicy {
+function policyFor(o: QuorvelOptions, name: string): ToolPolicy {
 	return { ...(o.defaultPolicy ?? {}), ...(o.perTool?.[name] ?? {}) }
 }
 
@@ -336,19 +336,19 @@ function wrapOne<T extends VercelLikeTool>(
 	return { ...tool, execute: wrapExecute(name, tool.execute.bind(tool), policy, ctx) }
 }
 
-/** Wrap a single AI SDK tool with the Belay reliability layer. */
+/** Wrap a single AI SDK tool with the Quorvel reliability layer. */
 export function wrapTool<T extends VercelLikeTool>(
 	name: string,
 	tool: T,
-	options: BelayOptions = {},
+	options: QuorvelOptions = {},
 ): T {
 	return wrapOne(name, tool, policyFor(options, name), buildCtx(options))
 }
 
 /** Wrap a whole toolset; all tools share one context (store + budget). */
-export function withBelay<T extends Record<string, VercelLikeTool>>(
+export function withQuorvel<T extends Record<string, VercelLikeTool>>(
 	tools: T,
-	options: BelayOptions = {},
+	options: QuorvelOptions = {},
 ): T {
 	const ctx = buildCtx(options)
 	const out: Record<string, VercelLikeTool> = {}
@@ -358,7 +358,7 @@ export function withBelay<T extends Record<string, VercelLikeTool>>(
 	return out as T
 }
 
-export interface Belay {
+export interface Quorvel {
 	store: ReliabilityStore
 	wrap<T extends Record<string, VercelLikeTool>>(tools: T): T
 	wrapOne<T extends VercelLikeTool>(name: string, tool: T, policy?: ToolPolicy): T
@@ -368,10 +368,10 @@ export interface Belay {
 }
 
 /**
- * Create a Belay instance with a shared context. This is the recommended entry
+ * Create a Quorvel instance with a shared context. This is the recommended entry
  * point: one instance per agent owns the store, budget, approvals, and events.
  */
-export function createBelay(options: BelayOptions = {}): Belay {
+export function createQuorvel(options: QuorvelOptions = {}): Quorvel {
 	const ctx = buildCtx(options)
 	return {
 		store: ctx.store,

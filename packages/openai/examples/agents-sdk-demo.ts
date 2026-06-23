@@ -1,17 +1,17 @@
-// Demo: OpenAI Agents SDK + Belay. The agent loops and "retries" a refund;
-// Belay guarantees the real refund happens exactly once, and a large refund is
+// Demo: OpenAI Agents SDK + Quorvel. The agent loops and "retries" a refund;
+// Quorvel guarantees the real refund happens exactly once, and a large refund is
 // parked for human approval.
 //
 //   pnpm tsx examples/agents-sdk-demo.ts
 //
 // In your real app you'd pass these tools to `new Agent({ tools })`.
-import { InMemoryLedger, approve, requireApprovalWhen } from "belay"
-import { withBelay } from "../src/index"
+import { InMemoryLedger, approve, requireApprovalWhen } from "@quorvel/core"
+import { withQuorvel } from "../src/index"
 
 const ledger = new InMemoryLedger()
 let realRefunds = 0
 
-const refund = withBelay(
+const refund = withQuorvel(
 	ledger,
 	{
 		name: "refund",

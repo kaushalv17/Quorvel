@@ -1,5 +1,5 @@
 /**
- * Seed your Neon database with a lively, realistic snapshot so Belay Mission
+ * Seed your Neon database with a lively, realistic snapshot so Quorvel Mission
  * Control looks alive the first time you open it against real data.
  *
  *   pnpm dashboard:seed
@@ -25,7 +25,7 @@ const minsAgo = (m) => new Date(Date.now() - m * 60000).toISOString()
 async function main() {
   const c = await pool.connect()
   try {
-    console.log("\u25c8 Seeding Belay demo data\u2026")
+    console.log("\u25c8 Seeding Quorvel demo data\u2026")
     // wipe previously-seeded rows
     await c.query(`delete from belay_actions where idempotency_key like 'seed:%'`)
     await c.query(`delete from belay_workflows where workflow_id like 'seed-%'`)

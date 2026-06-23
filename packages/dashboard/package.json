@@ -1,8 +1,8 @@
 {
-  "name": "@belay/dashboard",
+  "name": "@quorvel/dashboard",
   "version": "0.5.0",
   "private": true,
-  "description": "Belay Mission Control — a cinematic, real-time observability dashboard for the Belay agent-reliability SDK.",
+  "description": "Quorvel Mission Control — a cinematic, real-time observability dashboard for the Quorvel agent-reliability SDK.",
   "type": "module",
   "bin": {
     "belay-dashboard": "./server.mjs"

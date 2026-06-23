@@ -1,5 +1,5 @@
 {
-  "name": "belay",
+  "name": "@quorvel/core",
   "version": "0.1.0",
   "description": "It catches your AI agent when it falls — idempotency, durable ledger, approval gates and budgets for AI agent tool calls.",
   "type": "module",

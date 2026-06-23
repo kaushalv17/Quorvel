@@ -1,4 +1,4 @@
--- Belay saga / compensation schema (Phase 3)
+-- Quorvel saga / compensation schema (Phase 3)
 -- Run after 001_init.sql and 002_policy.sql.
 
 create table if not exists belay_sagas (

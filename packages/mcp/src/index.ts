@@ -1,5 +1,5 @@
 /**
- * @belay/mcp — Belay reliability adapter for the Model Context Protocol
+ * @quorvel/mcp — Quorvel reliability adapter for the Model Context Protocol
  * TypeScript SDK (`@modelcontextprotocol/sdk`).
  *
  * Wrap any MCP tool handler so `tools/call` gets exactly-once execution, a
@@ -9,16 +9,16 @@
  * clients and agents keep working.
  *
  * Three surfaces, pick what fits:
- *  - `registerBelayTool(server, ledger, name, config, handler, binding)` — register a guarded tool in one call.
- *  - `withBelayServer(server, ledger, binding)` — guard every tool on a server.
- *  - `withBelay` / `withBelayAll` / `guard` — wrap definitions or raw handlers yourself.
+ *  - `registerQuorvelTool(server, ledger, name, config, handler, binding)` — register a guarded tool in one call.
+ *  - `withQuorvelServer(server, ledger, binding)` — guard every tool on a server.
+ *  - `withQuorvel` / `withQuorvelAll` / `guard` — wrap definitions or raw handlers yourself.
  */
 export {
 	guard,
-	withBelay,
-	withBelayAll,
-	registerBelayTool,
-	withBelayServer,
+	withQuorvel,
+	withQuorvelAll,
+	registerQuorvelTool,
+	withQuorvelServer,
 } from "./tools"
 
 export {
@@ -29,8 +29,8 @@ export {
 	type McpToolDefinition,
 	type McpToolExtra,
 	type McpServerLike,
-	type BelayBinding,
-	type BelayInvocationContext,
+	type QuorvelBinding,
+	type QuorvelInvocationContext,
 	type ApprovalPendingInfo,
 	type PolicyDeniedInfo,
 	type Resolvable,
@@ -52,5 +52,5 @@ export {
 	rateLimit,
 	requireApprovalWhen,
 	denyWhen,
-} from "belay"
-export type { Ledger, Policy } from "belay"
+} from "@quorvel/core"
+export type { Ledger, Policy } from "@quorvel/core"

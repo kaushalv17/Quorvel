@@ -1,4 +1,4 @@
-// Idempotent DDL for the Belay Cloud ledger. Applied at boot by migrate().
+// Idempotent DDL for the Quorvel Cloud ledger. Applied at boot by migrate().
 export const SCHEMA_SQL = `
 create table if not exists orgs (
   id          text primary key,

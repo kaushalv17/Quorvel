@@ -1,6 +1,6 @@
 /**
- * Belay demo: an agent loops and tries to issue the SAME refund 5 times.
- * Without Belay that's 5 refunds. With Belay the real work runs once.
+ * Quorvel demo: an agent loops and tries to issue the SAME refund 5 times.
+ * Without Quorvel that's 5 refunds. With Quorvel the real work runs once.
  *
  * Run it:  pnpm demo
  */

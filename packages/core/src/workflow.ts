@@ -118,7 +118,7 @@ export class WorkflowEngine {
   /** Re-drive a suspended/interrupted run. Terminal runs are returned as-is. */
   async resume(workflowId: string): Promise<WorkflowRunRecord> {
     const run = await this.store.getRun(workflowId)
-    if (!run) throw new Error(`Belay: no workflow run "${workflowId}"`)
+    if (!run) throw new Error(`Quorvel: no workflow run "${workflowId}"`)
     if (run.status === "completed") return run
     const def = this.mustGet(run.name)
     return this.drive(def, workflowId, run.input)
@@ -143,7 +143,7 @@ export class WorkflowEngine {
     }
     await this.store.enqueueSignal(workflowId, name, payload)
     const run = await this.store.getRun(workflowId)
-    if (!run) throw new Error(`Belay: no workflow run "${workflowId}"`)
+    if (!run) throw new Error(`Quorvel: no workflow run "${workflowId}"`)
     return run
   }
 
@@ -167,7 +167,7 @@ export class WorkflowEngine {
 
   private mustGet(name: string): WorkflowDefinition {
     const def = this.registry.get(name)
-    if (!def) throw new Error(`Belay: workflow "${name}" is not registered`)
+    if (!def) throw new Error(`Quorvel: workflow "${name}" is not registered`)
     return def
   }
 

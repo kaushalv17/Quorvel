@@ -2,7 +2,7 @@
 
 > It catches your AI agent when it falls.
 
-The core Belay SDK. Phase 1 adds the durable ledger; right now it ships the
+The core Quorvel SDK. Phase 1 adds the durable ledger; right now it ships the
 deterministic **idempotency key** — the foundation of exactly-once tool calls.
 
 ## Install (once published)
@@ -14,7 +14,7 @@ npm install belay
 ## Usage
 
 ```ts
-import { idempotencyKey } from "belay"
+import { idempotencyKey } from "@quorvel/core"
 
 const key = idempotencyKey({
   tool: "refund",
