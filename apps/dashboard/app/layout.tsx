@@ -13,8 +13,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body>
 				<header className="topbar">
 					<Link href="/" className="brand">
+						<span className="brand-q">Q</span>
 						<span className="brand-mark">Quorvel</span>
-						<span className="brand-sub">control plane</span>
+						<span className="brand-sub">control plane ✎</span>
 					</Link>
 					<nav className="nav">
 						<Link href="/">Approvals</Link>

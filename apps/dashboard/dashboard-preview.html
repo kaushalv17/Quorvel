@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quorvel control plane — preview</title>
+<style>
 /* =====================================================================
    Quorvel control plane — playful paper / origami theme
    Matches the marketing site: warm paper, thick ink borders, hard
@@ -412,3 +419,103 @@ button.upgrade:disabled { opacity: 0.55; cursor: default; transform: none; box-s
 	}
 	.card:nth-child(odd), .card:nth-child(even) { transform: none; }
 }
+
+.nav a.nav-active{color:var(--ink);background:var(--sun);border-color:var(--ink);box-shadow:var(--shadow-sm)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="#" class="brand">
+    <span class="brand-q">Q</span>
+    <span class="brand-mark">Quorvel</span>
+    <span class="brand-sub">control plane ✎</span>
+  </a>
+  <nav class="nav">
+    <a href="#" class="nav-active">Approvals</a>
+    <a href="#agents">Agents</a>
+  </nav>
+</header>
+
+<main class="main">
+  <h1>Approvals</h1>
+  <p class="subtle">Actions your agents paused for human review, newest first.</p>
+
+  <div class="usage-bar">
+    <div class="stat"><b>3</b><span>awaiting approval</span></div>
+    <div class="stat"><b>pro</b><span>plan</span></div>
+    <div class="stat"><b>42,180 / 100,000</b><span>actions this period (2026-06)</span></div>
+    <div class="stat upgrade-cell">
+      <span class="upgrade-label">Need more headroom?</span>
+      <div class="upgrade-actions"><button class="upgrade" type="button">Upgrade to Scale</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><span class="card-title">charge.customer</span> <span class="badge awaiting_approval">awaiting</span></div>
+      <div class="card-meta">6/25/2026, 9:58:12 PM</div>
+    </div>
+    <div class="card-meta">agent: <a href="#">billing-agent</a> · cost 3 · key act_9f2c1a</div>
+    <div class="card-reason">“Amount $1,240 exceeds the $1,000 auto-approve ceiling.”</div>
+    <div class="row-actions">
+      <form><button class="approve" type="button">Approve</button></form>
+      <form><input type="text" placeholder="reason (optional)"><button class="reject" type="button">Reject</button></form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><span class="card-title">send.email.bulk</span> <span class="badge awaiting_approval">awaiting</span></div>
+      <div class="card-meta">6/25/2026, 9:51:03 PM</div>
+    </div>
+    <div class="card-meta">agent: <a href="#">growth-agent</a> · cost 1 · key act_7b3d40</div>
+    <div class="card-reason">“Audience size 18,400 — above the 10k blast guardrail.”</div>
+    <div class="row-actions">
+      <form><button class="approve" type="button">Approve</button></form>
+      <form><input type="text" placeholder="reason (optional)"><button class="reject" type="button">Reject</button></form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><span class="card-title">delete.records</span> <span class="badge awaiting_approval">awaiting</span></div>
+      <div class="card-meta">6/25/2026, 9:44:41 PM</div>
+    </div>
+    <div class="card-meta">agent: <a href="#">ops-agent</a> · cost 5 · key act_5a18ce</div>
+    <div class="row-actions">
+      <form><button class="approve" type="button">Approve</button></form>
+      <form><input type="text" placeholder="reason (optional)"><button class="reject" type="button">Reject</button></form>
+    </div>
+  </div>
+
+  <h1 id="agents" style="margin-top:54px">Agents</h1>
+  <p class="subtle">Recent activity grouped by agent scope. Click through for a full timeline.</p>
+  <div class="agent-grid">
+    <a href="#" class="card agent-card"><div class="count">128</div><div class="card-title">billing-agent</div><div class="card-meta">1 awaiting approval</div></a>
+    <a href="#" class="card agent-card"><div class="count">86</div><div class="card-title">growth-agent</div><div class="card-meta">1 awaiting approval</div></a>
+    <a href="#" class="card agent-card"><div class="count">54</div><div class="card-title">ops-agent</div><div class="card-meta">1 awaiting approval</div></a>
+    <a href="#" class="card agent-card"><div class="count">37</div><div class="card-title">support-agent</div><div class="card-meta">all clear</div></a>
+    <a href="#" class="card agent-card"><div class="count">12</div><div class="card-title">research-agent</div><div class="card-meta">all clear</div></a>
+  </div>
+
+  <h1 style="margin-top:54px">billing-agent</h1>
+  <p class="subtle">5 recent actions</p>
+  <div class="timeline">
+    <div class="event"><div><span class="card-title">charge.customer</span> <span class="badge awaiting_approval">awaiting</span></div><div class="when">6/25/2026, 9:58:12 PM · cost 3 · attempts 1 · act_9f2c1a</div></div>
+    <div class="event"><div><span class="card-title">refund.issue</span> <span class="badge succeeded">succeeded</span></div><div class="when">6/25/2026, 9:40:05 PM · cost 2 · attempts 1 · act_8c2b11</div></div>
+    <div class="event"><div><span class="card-title">charge.customer</span> <span class="badge running">running</span></div><div class="when">6/25/2026, 9:31:55 PM · cost 1 · attempts 2 · act_71aa90</div></div>
+    <div class="event"><div><span class="card-title">charge.customer</span> <span class="badge failed">failed</span></div><div class="when">6/25/2026, 9:22:18 PM · cost 1 · attempts 3 · act_66de02</div><div class="card-reason">error: card_declined — retried with exactly-once guard</div></div>
+    <div class="event"><div><span class="card-title">invoice.finalize</span> <span class="badge approved">approved</span></div><div class="when">6/25/2026, 9:10:47 PM · cost 2 · attempts 1 · act_5510ab</div></div>
+  </div>
+
+  <div class="empty" style="margin-top:28px">Nothing waiting. Your agents are all clear. ✨</div>
+</main>
+
+<footer class="footer">
+  <span class="footer-brand">Quorvel</span>
+  <nav class="footer-links"><a href="#">Home</a><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Refunds</a></nav>
+</footer>
+
+</body>
+</html>
