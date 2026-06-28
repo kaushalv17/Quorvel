@@ -5,6 +5,7 @@ import type {
 	ActionRecord,
 	ActionStatus,
 	ApiKeyRecord,
+	Membership,
 	InsertPendingInput,
 	InsertResult,
 	Org,
@@ -59,6 +60,12 @@ export interface Store {
 	): Promise<ActionRecord[]>
 	listRecent(orgId: string, limit?: number): Promise<ActionRecord[]>
 	stats(orgId: string, filter: StatsFilter): Promise<Stats>
+	linkClerkOrg(orgId: string, clerkOrgId: string): Promise<void>
+	getOrgByClerkId(clerkOrgId: string): Promise<Org | undefined>
+	upsertMembership(m: Membership): Promise<void>
+	getMembership(clerkUserId: string, orgId: string): Promise<Membership | undefined>
+	listMembershipsByUser(clerkUserId: string): Promise<Membership[]>
+	listMembershipsByOrg(orgId: string): Promise<Membership[]>
 }
 
 export class MemStore implements Store {
@@ -176,5 +183,47 @@ export class MemStore implements Store {
 			totalCost += r.cost
 		}
 		return { count, totalCost }
+	}
+
+	private readonly memberships = new Map<string, Membership>()
+
+	private mkey(clerkUserId: string, orgId: string): string {
+		return clerkUserId + "::" + orgId
+	}
+
+	async linkClerkOrg(orgId: string, clerkOrgId: string): Promise<void> {
+		const org = this.orgs.get(orgId)
+		if (org) org.clerkOrgId = clerkOrgId
+	}
+
+	async getOrgByClerkId(clerkOrgId: string): Promise<Org | undefined> {
+		for (const org of this.orgs.values()) {
+			if (org.clerkOrgId === clerkOrgId) return org
+		}
+		return undefined
+	}
+
+	async upsertMembership(m: Membership): Promise<void> {
+		this.memberships.set(this.mkey(m.clerkUserId, m.orgId), m)
+	}
+
+	async getMembership(clerkUserId: string, orgId: string): Promise<Membership | undefined> {
+		return this.memberships.get(this.mkey(clerkUserId, orgId))
+	}
+
+	async listMembershipsByUser(clerkUserId: string): Promise<Membership[]> {
+		const out: Membership[] = []
+		for (const m of this.memberships.values()) {
+			if (m.clerkUserId === clerkUserId) out.push(m)
+		}
+		return out
+	}
+
+	async listMembershipsByOrg(orgId: string): Promise<Membership[]> {
+		const out: Membership[] = []
+		for (const m of this.memberships.values()) {
+			if (m.orgId === orgId) out.push(m)
+		}
+		return out
 	}
 }

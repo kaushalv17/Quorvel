@@ -18,6 +18,8 @@ import type {
 	InsertResult,
 	IssueKeyInput,
 	IssueKeyResult,
+	ProvisionOrgInput,
+	ProvisionOrgResult,
 	Stats,
 	StatsFilter,
 	TransitionPatch,
@@ -74,6 +76,54 @@ export class QuorvelCloudService {
 			createdAt: now,
 		})
 		return { orgId, apiKey, keyPrefix: keyPrefix(apiKey) }
+	}
+
+	async provisionOrg(input: ProvisionOrgInput): Promise<ProvisionOrgResult> {
+		if (!input || !input.clerkOrgId || !input.clerkUserId) {
+			throw badRequest("clerkOrgId and clerkUserId are required")
+		}
+		const role = input.role ?? "owner"
+		const now = new Date().toISOString()
+
+		// Idempotent: if this Clerk org is already linked, ensure membership only.
+		const existing = await this.store.getOrgByClerkId(input.clerkOrgId)
+		if (existing) {
+			const member = await this.store.getMembership(input.clerkUserId, existing.id)
+			if (!member) {
+				await this.store.upsertMembership({
+					clerkUserId: input.clerkUserId,
+					orgId: existing.id,
+					role,
+					createdAt: now,
+				})
+			}
+			return { orgId: existing.id, created: false }
+		}
+
+		const orgId = newId("org")
+		await this.store.insertOrg({
+			id: orgId,
+			name: input.orgName ?? "org",
+			plan: "free",
+			clerkOrgId: input.clerkOrgId,
+			createdAt: now,
+		})
+		await this.store.upsertMembership({
+			clerkUserId: input.clerkUserId,
+			orgId,
+			role,
+			createdAt: now,
+		})
+		const apiKey = generateApiKey("live")
+		await this.store.insertApiKey({
+			id: newId("key"),
+			orgId,
+			keyHash: hashApiKey(apiKey),
+			keyPrefix: keyPrefix(apiKey),
+			name: "default",
+			createdAt: now,
+		})
+		return { orgId, created: true, apiKey, keyPrefix: keyPrefix(apiKey) }
 	}
 
 	async authenticate(authHeader: string | undefined): Promise<{ orgId: string }> {

@@ -46,4 +46,17 @@ create table if not exists usage_counters (
   count   bigint not null default 0,
   primary key (org_id, period)
 );
+
+-- Multi-tenancy: link Quorvel orgs to Clerk orgs + a membership roster.
+alter table orgs add column if not exists clerk_org_id text;
+create unique index if not exists orgs_clerk_org_id_idx on orgs (clerk_org_id);
+
+create table if not exists memberships (
+  clerk_user_id  text not null,
+  org_id         text not null references orgs(id) on delete cascade,
+  role           text not null default 'member',
+  created_at     timestamptz not null default now(),
+  primary key (clerk_user_id, org_id)
+);
+create index if not exists memberships_org_idx on memberships (org_id);
 `

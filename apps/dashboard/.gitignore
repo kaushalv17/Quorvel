@@ -12,3 +12,6 @@ next-env.d.ts
 
 .DS_Store
 npm-debug.log*
+
+# clerk configuration (can include secrets)
+/.clerk/

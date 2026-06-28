@@ -16,6 +16,7 @@ export interface Org {
 	id: string
 	name: string
 	plan: string
+	clerkOrgId?: string | null
 	createdAt: string
 }
 
@@ -93,4 +94,25 @@ export interface IssueKeyResult {
 	orgId: string
 	apiKey: string
 	keyPrefix: string
+}
+
+export interface Membership {
+	clerkUserId: string
+	orgId: string
+	role: string
+	createdAt: string
+}
+
+export interface ProvisionOrgInput {
+	clerkOrgId: string
+	clerkUserId: string
+	orgName?: string
+	role?: string
+}
+
+export interface ProvisionOrgResult {
+	orgId: string
+	created: boolean
+	apiKey?: string
+	keyPrefix?: string
 }

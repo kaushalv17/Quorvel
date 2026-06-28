@@ -9,6 +9,7 @@ import type {
 	ActionRecord,
 	ActionStatus,
 	ApiKeyRecord,
+	Membership,
 	InsertPendingInput,
 	InsertResult,
 	Org,
@@ -43,24 +44,33 @@ function toIso(v: unknown): string {
 	return v instanceof Date ? v.toISOString() : String(v)
 }
 
+function mapMembership(row: Record<string, unknown>): Membership {
+	return {
+		clerkUserId: row.clerk_user_id as string,
+		orgId: row.org_id as string,
+		role: row.role as string,
+		createdAt: toIso(row.created_at),
+	}
+}
+
 export class PgStore implements Store {
 	constructor(readonly pool: Pool) {}
 
 	async insertOrg(org: Org): Promise<void> {
 		await this.pool.query(
-			`insert into orgs (id, name, plan, created_at) values ($1,$2,$3,$4) on conflict (id) do nothing`,
-			[org.id, org.name, org.plan, org.createdAt],
+			`insert into orgs (id, name, plan, clerk_org_id, created_at) values ($1,$2,$3,$4,$5) on conflict (id) do nothing`,
+			[org.id, org.name, org.plan, org.clerkOrgId ?? null, org.createdAt],
 		)
 	}
 
 	async getOrg(orgId: string): Promise<Org | undefined> {
 		const { rows } = await this.pool.query(
-			`select id, name, plan, created_at from orgs where id=$1`,
+			`select id, name, plan, clerk_org_id, created_at from orgs where id=$1`,
 			[orgId],
 		)
 		if (!rows.length) return undefined
 		const r = rows[0]
-		return { id: r.id, name: r.name, plan: r.plan, createdAt: toIso(r.created_at) }
+		return { id: r.id, name: r.name, plan: r.plan, clerkOrgId: r.clerk_org_id ?? null, createdAt: toIso(r.created_at) }
 	}
 
 	async insertApiKey(rec: ApiKeyRecord): Promise<void> {
@@ -164,5 +174,61 @@ export class PgStore implements Store {
 			[orgId, filter.scope, filter.tool ?? null, filter.since ?? null],
 		)
 		return { count: Number(rows[0].count), totalCost: Number(rows[0].total_cost) }
+	}
+
+	async linkClerkOrg(orgId: string, clerkOrgId: string): Promise<void> {
+		await this.pool.query(`update orgs set clerk_org_id=$2 where id=$1`, [
+			orgId,
+			clerkOrgId,
+		])
+	}
+
+	async getOrgByClerkId(clerkOrgId: string): Promise<Org | undefined> {
+		const { rows } = await this.pool.query(
+			`select id, name, plan, clerk_org_id, created_at from orgs where clerk_org_id=$1`,
+			[clerkOrgId],
+		)
+		if (!rows.length) return undefined
+		const r = rows[0]
+		return {
+			id: r.id,
+			name: r.name,
+			plan: r.plan,
+			clerkOrgId: r.clerk_org_id ?? null,
+			createdAt: toIso(r.created_at),
+		}
+	}
+
+	async upsertMembership(m: Membership): Promise<void> {
+		await this.pool.query(
+			`insert into memberships (clerk_user_id, org_id, role, created_at)
+			      values ($1,$2,$3,$4)
+			 on conflict (clerk_user_id, org_id) do update set role=excluded.role`,
+			[m.clerkUserId, m.orgId, m.role, m.createdAt],
+		)
+	}
+
+	async getMembership(clerkUserId: string, orgId: string): Promise<Membership | undefined> {
+		const { rows } = await this.pool.query(
+			`select clerk_user_id, org_id, role, created_at from memberships where clerk_user_id=$1 and org_id=$2`,
+			[clerkUserId, orgId],
+		)
+		return rows.length ? mapMembership(rows[0]) : undefined
+	}
+
+	async listMembershipsByUser(clerkUserId: string): Promise<Membership[]> {
+		const { rows } = await this.pool.query(
+			`select clerk_user_id, org_id, role, created_at from memberships where clerk_user_id=$1`,
+			[clerkUserId],
+		)
+		return rows.map((r: Record<string, unknown>) => mapMembership(r))
+	}
+
+	async listMembershipsByOrg(orgId: string): Promise<Membership[]> {
+		const { rows } = await this.pool.query(
+			`select clerk_user_id, org_id, role, created_at from memberships where org_id=$1`,
+			[orgId],
+		)
+		return rows.map((r: Record<string, unknown>) => mapMembership(r))
 	}
 }
