@@ -8,11 +8,11 @@
 -- ============================================================================
 
 update orgs
-   set clerk_org_id = 'CLERK_ORG_ID'
+   set clerk_org_id = 'org_3Fl9TKUB3aV9IP6lZgOzUpXbpum'
  where id = 'org_92f2caf6bba24e5da46e3f3df506c7c3';
 
 insert into memberships (clerk_user_id, org_id, role)
-values ('CLERK_USER_ID', 'org_92f2caf6bba24e5da46e3f3df506c7c3', 'owner')
+values ('user_3Fl9QMQ5uywvqyfNgfseza1qgPU', 'org_92f2caf6bba24e5da46e3f3df506c7c3', 'owner')
 on conflict (clerk_user_id, org_id) do update set role = excluded.role;
 
 -- Verify:
