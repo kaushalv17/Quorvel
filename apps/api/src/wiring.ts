@@ -8,6 +8,7 @@ import { InProcessBus, QueueBus } from "./bus"
 import { createQueue } from "./queue"
 import type { DomainEvent } from "./events"
 import { newId } from "./keys"
+import { CircuitBreaker, guard } from "./resilience"
 import {
     MemDeadLetterStore,
     PgDeadLetterStore,
@@ -55,7 +56,6 @@ export function buildDeps(
     opts: { pool?: SqlPool; env?: Record<string, string | undefined> } = {},
 ): ServiceDepsBundle {
     const env = opts.env ?? process.env
-
     const usageStore: UsageStore = opts.pool
         ? new PgUsageStore(opts.pool)
         : new MemUsageStore()
@@ -79,6 +79,26 @@ export function buildDeps(
               })
             : undefined
 
+    // Wrap OUTBOUND Paddle calls in a circuit breaker: a flaky billing API then
+    // fast-fails with 503 (graceful degradation) instead of hanging the request
+    // path -- and core action tracking, which never touches Paddle, keeps
+    // working. handleWebhook is skipped on purpose: it is inbound verification,
+    // and a burst of bad signatures must not trip the breaker and block real
+    // checkouts.
+    const guardedBilling =
+        billing &&
+        guard(
+            billing,
+            new CircuitBreaker({
+                name: "paddle",
+                failureThreshold: Number(env.QUORVEL_PADDLE_BREAKER_THRESHOLD ?? 4),
+                cooldownMs: Number(env.QUORVEL_PADDLE_BREAKER_COOLDOWN_MS ?? 30000),
+                onStateChange: (state, name) =>
+                    console.log(`[breaker] ${name} -> ${state}`),
+            }),
+            { skip: ["handleWebhook"] },
+        )
+
     const transports: AlertTransport[] = []
     if (env.SLACK_WEBHOOK_URL) transports.push(new SlackTransport(env.SLACK_WEBHOOK_URL))
     if (env.ALERT_WEBHOOK_URL) transports.push(new WebhookTransport(env.ALERT_WEBHOOK_URL))
@@ -98,7 +118,6 @@ export function buildDeps(
         ? new PgDeadLetterStore(opts.pool as unknown as SqlQueryable)
         : new MemDeadLetterStore()
     const sink = makeSink(deadLetters, () => newId("dlq"))
-
     // Named so a failure can be attributed to (and replayed against) one subscriber.
     const named: NamedSubscriber[] = [
         { name: "usage-meter", handle: meter.onEvent },
@@ -145,7 +164,7 @@ export function buildDeps(
     }
 
     return {
-        deps: { bus, limiter: meter, billing, deadLetters, deadLetterReplay },
+        deps: { bus, limiter: meter, billing: guardedBilling, deadLetters, deadLetterReplay },
         bus,
         deadLetters,
         close,

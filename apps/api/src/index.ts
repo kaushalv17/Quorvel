@@ -1,6 +1,6 @@
 // Package entrypoint + process bootstrap.
 // Re-exports the public surface (so @quorvel/cloud-api can be imported as a
-// library by the dashboard''s contract tests) and, when run directly, starts the
+// library by the dashboard's contract tests) and, when run directly, starts the
 // Fastify server with the full production wiring.
 import { fileURLToPath } from "node:url"
 import path from "node:path"
@@ -10,6 +10,7 @@ import { buildServer } from "./server"
 import { MemStore, type Store } from "./store"
 import { PgStore } from "./pgStore"
 import { buildDeps } from "./wiring"
+import { CircuitBreaker, guard } from "./resilience"
 import type { SqlPool } from "./billing"
 
 export * from "./types"
@@ -31,13 +32,29 @@ export async function main(): Promise<void> {
     if (databaseUrl) {
         pool = new Pool({ connectionString: databaseUrl })
         await migrate(pool)
-        store = new PgStore(pool)
+        // Guard the primary DB path with a circuit breaker. Auth hits the store on
+        // every request, so a Postgres outage trips this fast and the whole API
+        // degrades to a clean 503 (+ retryAfter) instead of piling up slow,
+        // timing-out requests. Conservative defaults: 8 consecutive failures to
+        // open, 5s cooldown -- enough to ride out a brief Neon blip without
+        // amplifying it into a long outage window.
+        store = guard(
+            new PgStore(pool),
+            new CircuitBreaker({
+                name: "database",
+                failureThreshold: Number(process.env.QUORVEL_DB_BREAKER_THRESHOLD ?? 8),
+                cooldownMs: Number(process.env.QUORVEL_DB_BREAKER_COOLDOWN_MS ?? 5000),
+                onStateChange: (state, name) =>
+                    console.log(`[breaker] ${name} -> ${state}`),
+            }),
+        )
     } else {
         store = new MemStore()
     }
 
     const { deps } = buildDeps(store, { pool: pool as unknown as SqlPool | undefined })
     const app = buildServer(store, { adminSecret: process.env.QUORVEL_ADMIN_SECRET, deps })
+
     const port = Number(process.env.PORT ?? 8080)
     await app.listen({ port, host: "0.0.0.0" })
     console.log(`belay-cloud-api listening on :${port}`)
