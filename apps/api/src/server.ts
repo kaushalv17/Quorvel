@@ -3,7 +3,7 @@
 // serves traffic.
 import Fastify from "fastify"
 import { handleRequest, API_VERSION } from "./router"
-import { FixedWindowRateLimiter } from "./rateLimit"
+import { FixedWindowRateLimiter, identifyCaller } from "./rateLimit"
 import { QuorvelCloudService, type ServiceDeps } from "./service"
 import type { Store } from "./store"
 
@@ -35,20 +35,44 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
     const adminSecret = opts.adminSecret ?? process.env.QUORVEL_ADMIN_SECRET
     const dashboardSecret = opts.dashboardSecret ?? process.env.DASHBOARD_SERVICE_SECRET
 
+    // Per-caller rate limiting (cost guardrail). Authenticated callers are capped
+    // per API key / org; unauthenticated callers share a separate, tighter IP cap.
+    // Both default OFF (limit 0) so prod is unaffected until you opt in.
     const rlMax = Number(process.env.QUORVEL_RATE_LIMIT_PER_MIN ?? 0)
-    const limiter = rlMax > 0 ? new FixedWindowRateLimiter(rlMax) : undefined
-    if (limiter) {
+    const rlAnonMax = Number(process.env.QUORVEL_RATE_LIMIT_ANON_PER_MIN ?? rlMax)
+    const authedLimiter = rlMax > 0 ? new FixedWindowRateLimiter(rlMax) : undefined
+    const anonLimiter = rlAnonMax > 0 ? new FixedWindowRateLimiter(rlAnonMax) : undefined
+
+    if (authedLimiter || anonLimiter) {
+        // Periodically drop expired buckets so memory can't grow unbounded.
+        const live = [authedLimiter, anonLimiter].filter(Boolean) as FixedWindowRateLimiter[]
+        const sweepTimer = setInterval(() => {
+            for (const l of live) l.sweep()
+        }, 60_000)
+        if (typeof (sweepTimer as any).unref === "function") (sweepTimer as any).unref()
+        app.addHook("onClose", async () => clearInterval(sweepTimer))
+
         app.addHook("onRequest", async (req: any, reply: any) => {
             const url: string = req.url ?? "/"
             if (!url.startsWith("/v1/")) return
-            const auth = req.headers?.["authorization"]
-            const org = req.headers?.["x-clerk-org-id"]
-            const ip = req.ip ?? "anon"
-            const key = String(auth || org || ip)
-            const r = limiter.check(key)
+            // Webhooks are signature-verified and must never be dropped.
+            if (url.startsWith("/v1/webhooks/")) return
+
+            const caller = identifyCaller({
+                authorization: req.headers?.["authorization"],
+                orgId: req.headers?.["x-clerk-org-id"],
+                ip: req.ip,
+            })
+            const limiter = caller.authenticated ? authedLimiter : anonLimiter
+            if (!limiter) return
+
+            const r = limiter.check(caller.id)
             reply.header("x-ratelimit-limit", String(r.limit))
             reply.header("x-ratelimit-remaining", String(r.remaining))
+            reply.header("x-ratelimit-reset", String(Math.ceil(r.resetMs / 1000)))
             if (!r.allowed) {
+                reply.header("x-api-version", API_VERSION)
+                reply.header("retry-after", String(Math.ceil(r.resetMs / 1000)))
                 reply.code(429)
                 return reply.send({ error: "rate limit exceeded", code: "rate_limited" })
             }
