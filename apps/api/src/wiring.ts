@@ -44,6 +44,13 @@ import {
 	type ActionEventLog,
 	type ActionEventQueryable,
 } from "./actionEvents"
+import {
+    MemAlertRuleStore,
+    PgAlertRuleStore,
+    type AlertRuleStore,
+    type AlertRuleQueryable,
+} from "./alertRules"
+import { DEFAULT_RULES } from "./alerts"
 
 export interface ServiceDepsBundle {
     deps: {
@@ -53,6 +60,7 @@ export interface ServiceDepsBundle {
         deadLetters: DeadLetterStore
         deadLetterReplay: (rec: DeadLetterRecord) => Promise<void>
 		actionEventLog: ActionEventLog
+        alertRuleStore: AlertRuleStore
     }
     bus: EventBus
     deadLetters: DeadLetterStore
@@ -119,7 +127,10 @@ export function buildDeps(
             }),
         )
     }
-    const dispatcher = new AlertDispatcher(transports)
+    const alertRuleStore: AlertRuleStore = opts.pool
+        ? new PgAlertRuleStore(opts.pool as unknown as AlertRuleQueryable)
+        : new MemAlertRuleStore()
+    const dispatcher = new AlertDispatcher(transports, DEFAULT_RULES, alertRuleStore)
 
     // --- Dead-letter queue: persistent capture + replay of failed deliveries ---
     const deadLetters: DeadLetterStore = opts.pool
@@ -178,7 +189,7 @@ export function buildDeps(
     }
 
     return {
-        deps: { bus, limiter: meter, billing: guardedBilling, deadLetters, deadLetterReplay, actionEventLog },
+        deps: { bus, limiter: meter, billing: guardedBilling, deadLetters, deadLetterReplay, actionEventLog, alertRuleStore },
         bus,
         deadLetters,
         close,

@@ -38,6 +38,7 @@ export async function initObservability(): Promise<ObservabilityHandle> {
 			const { NodeSDK } = await import("@opentelemetry/sdk-node")
 			// @ts-ignore - optional dependency.
 			const { getNodeAutoInstrumentations } = await import(
+				// @ts-ignore optional auto-instrumentations dependency
 				"@opentelemetry/auto-instrumentations-node"
 			)
 			const sdk = new NodeSDK({

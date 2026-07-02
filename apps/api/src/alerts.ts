@@ -2,6 +2,7 @@
 // Resend) plus a rule set that turns domain events into alerts. The dispatcher
 // is a bus subscriber. All transports take an injectable fetch for testing.
 import type { DomainEvent } from "./events"
+import type { AlertRuleRecord, AlertRuleStore, AlertTrigger } from "./alertRules"
 
 export interface FetchResponse {
 	ok: boolean
@@ -139,16 +140,48 @@ export const DEFAULT_RULES: AlertRule[] = [
 	},
 ]
 
+const RULE_TRIGGER: Record<string, AlertTrigger> = {
+    "approval-needed": "awaiting_approval",
+    "policy-denied": "denied",
+    "action-failed": "failed",
+}
+
 export class AlertDispatcher {
-	constructor(
-		private readonly transports: AlertTransport[],
-		private readonly rules: AlertRule[] = DEFAULT_RULES,
-	) {}
-	handle = async (e: DomainEvent): Promise<void> => {
-		for (const rule of this.rules) {
-			if (!rule.match(e)) continue
-			const alert = rule.build(e)
-			await Promise.all(this.transports.map((t) => t.send(alert)))
-		}
-	}
+    constructor(
+        private readonly transports: AlertTransport[],
+        private readonly rules: AlertRule[] = DEFAULT_RULES,
+        private readonly ruleStore?: AlertRuleStore,
+    ) {}
+
+    handle = async (e: DomainEvent): Promise<void> => {
+        const orgRules = this.ruleStore ? await this.ruleStore.list(e.orgId) : null
+        for (const rule of this.rules) {
+            if (!rule.match(e)) continue
+            const alert = rule.build(e)
+            const targets = this.selectTransports(orgRules, rule.id, e.scope ?? null)
+            if (targets.length === 0) continue
+            await Promise.all(targets.map((t) => t.send(alert)))
+        }
+    }
+
+    // Global-channels model: with no store (or an org that has configured no
+    // rules) we preserve the original behavior and fan out to every transport.
+    // Once an org has any rule, only the channels named by rules matching this
+    // trigger + scope receive the alert -- so an org can opt specific triggers
+    // in or out, optionally per agent scope.
+    private selectTransports(
+        orgRules: AlertRuleRecord[] | null,
+        ruleId: string,
+        scope: string | null,
+    ): AlertTransport[] {
+        if (orgRules === null || orgRules.length === 0) return this.transports
+        const trigger = RULE_TRIGGER[ruleId]
+        if (!trigger) return this.transports
+        const matched = orgRules.filter(
+            (r) => r.enabled && r.trigger === trigger && (r.scope === null || r.scope === scope),
+        )
+        if (matched.length === 0) return []
+        const names = new Set(matched.flatMap((r) => r.channels))
+        return this.transports.filter((t) => names.has(t.name))
+    }
 }
