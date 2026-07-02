@@ -6,7 +6,7 @@ on:
   pull_request:
 
 concurrency:
-  group: ci-$ github.ref 
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,6 +27,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm --filter "./packages/*" --if-present build
 
       - name: Typecheck
         run: pnpm -r --if-present typecheck
