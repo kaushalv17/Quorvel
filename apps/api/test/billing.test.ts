@@ -1,5 +1,5 @@
 // Part 9 - metered billing: plan limits, usage accrual, atomic quota
-// enforcement at insert time, and Stripe reporting (over fake fetch).
+// enforcement at insert time, usage signals, and Stripe reporting (fake fetch).
 import { assert, it, section, summary } from "./_assert"
 import {
     MemUsageStore,
@@ -72,6 +72,44 @@ await (async () => {
         await meter.onEvent(mk("action.transition"))
         assert.equal(reported, 1)
         assert.equal(await u.get("o", currentPeriod()), 0)
+    })
+
+    section("usage signals")
+
+    await it("percentUsed / nearLimit / over are all quiet below the threshold", async () => {
+        const u = new MemUsageStore()
+        await u.increment("o", currentPeriod(), 500) // 50% of free 1000
+        const snap = await new UsageMeter(u, plans("free")).usage("o")
+        assert.equal(snap.percentUsed, 0.5)
+        assert.equal(snap.nearLimit, false)
+        assert.equal(snap.over, false)
+    })
+
+    await it("nearLimit flips true at/above the 80% threshold", async () => {
+        const u = new MemUsageStore()
+        await u.increment("o", currentPeriod(), 800) // exactly 80%
+        const snap = await new UsageMeter(u, plans("free")).usage("o")
+        assert.equal(snap.percentUsed, 0.8)
+        assert.equal(snap.nearLimit, true)
+        assert.equal(snap.over, false)
+    })
+
+    await it("over flips true at the limit and nearLimit yields to it", async () => {
+        const u = new MemUsageStore()
+        await u.increment("o", currentPeriod(), 1000)
+        const snap = await new UsageMeter(u, plans("free")).usage("o")
+        assert.equal(snap.over, true)
+        assert.equal(snap.nearLimit, false)
+        assert.equal(snap.percentUsed, 1)
+    })
+
+    await it("unlimited plans never signal near/over", async () => {
+        const u = new MemUsageStore()
+        await u.increment("o", currentPeriod(), 5000000)
+        const snap = await new UsageMeter(u, plans("scale")).usage("o")
+        assert.equal(snap.percentUsed, 0)
+        assert.equal(snap.nearLimit, false)
+        assert.equal(snap.over, false)
     })
 
     section("atomic enforcement (reserve/release)")

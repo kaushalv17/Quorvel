@@ -17,6 +17,8 @@ export function planLimit(plan: string | undefined): number {
 	return PLANS[plan] ?? PLANS.free
 }
 
+export const NEAR_LIMIT_THRESHOLD = 0.8
+
 export function currentPeriod(now: Date = new Date()): string {
 	const y = now.getUTCFullYear()
 	const m = String(now.getUTCMonth() + 1).padStart(2, "0")
@@ -71,11 +73,14 @@ export class PgUsageStore implements UsageStore {
 export type PlanLookup = (orgId: string) => Promise<string>
 
 export interface UsageSnapshot {
-	plan: string
-	period: string
-	used: number
-	limit: number
-	remaining: number
+    plan: string
+    period: string
+    used: number
+    limit: number
+    remaining: number
+    percentUsed: number
+    nearLimit: boolean
+    over: boolean
 }
 export interface UsageVerdict {
 	allowed: boolean
@@ -139,7 +144,10 @@ export class UsageMeter implements UsageLimiter {
 		const period = currentPeriod()
 		const used = await this.store.get(orgId, period)
 		const remaining = limit === Infinity ? Infinity : Math.max(0, limit - used)
-		return { plan, period, used, limit, remaining }
+		const percentUsed = limit === Infinity || limit === 0 ? 0 : Math.min(1, used / limit)
+        const over = limit !== Infinity && used >= limit
+        const nearLimit = limit !== Infinity && !over && percentUsed >= NEAR_LIMIT_THRESHOLD
+        return { plan, period, used, limit, remaining, percentUsed, nearLimit, over }
 	}
 
 	onEvent = async (e: DomainEvent): Promise<void> => {

@@ -434,7 +434,16 @@ export class QuorvelCloudService {
     async usage(orgId: string): Promise<UsageSnapshot> {
         if (this.limiter) return this.limiter.usage(orgId)
         const limit = planLimit("free")
-        return { plan: "free", period: currentPeriod(), used: 0, limit, remaining: limit }
+        return {
+            plan: "free",
+            period: currentPeriod(),
+            used: 0,
+            limit,
+            remaining: limit,
+            percentUsed: 0,
+            nearLimit: false,
+            over: false,
+        }
     }
 
     private async audit(
