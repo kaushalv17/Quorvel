@@ -149,5 +149,32 @@ await (async () => {
         assert.equal(((await call(svc, { method: "GET", path: "/v1/alert-rules", headers: auth })).body as any[]).length, 3)
     })
 
+    section("plan features on /v1/me")
+
+    await it("free plan reports its feature caps and live alert-rule usage", async () => {
+        const svc = newSvc()
+        const auth = await authFor(svc)
+        const me1 = await call(svc, { method: "GET", path: "/v1/me", headers: auth })
+        assert.equal(me1.status, 200)
+        const f1 = (me1.body as any).features
+        assert.equal(f1.maxAlertRules, 1)
+        assert.equal(f1.retentionDays, 7)
+        assert.equal(f1.maxSeats, 2)
+        assert.equal(f1.alertRulesUsed, 0)
+        await call(svc, { method: "POST", path: "/v1/alert-rules", headers: auth, body: mkRule("one") })
+        const me2 = await call(svc, { method: "GET", path: "/v1/me", headers: auth })
+        assert.equal((me2.body as any).features.alertRulesUsed, 1)
+    })
+
+    await it("a higher plan reports higher caps", async () => {
+        const svc = newSvc()
+        const auth = await authForPlan(svc, "pro")
+        const me = await call(svc, { method: "GET", path: "/v1/me", headers: auth })
+        const f = (me.body as any).features
+        assert.equal(f.maxAlertRules, 10)
+        assert.equal(f.retentionDays, 30)
+        assert.equal(f.maxSeats, 10)
+    })
+
     summary()
 })()

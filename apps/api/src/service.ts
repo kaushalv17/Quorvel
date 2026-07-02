@@ -558,6 +558,7 @@ export class QuorvelCloudService {
 
     async me(orgId: string): Promise<{
         org: { id: string; name: string; plan: string; createdAt: string }
+        features: { maxAlertRules: number; retentionDays: number; maxSeats: number; alertRulesUsed: number }
         usage: UsageSnapshot
     }> {
         const org = await this.store.getOrg(orgId)
@@ -568,6 +569,12 @@ export class QuorvelCloudService {
                 name: org?.name ?? "org",
                 plan: org?.plan ?? "free",
                 createdAt: org?.createdAt ?? new Date().toISOString(),
+            },
+            features: {
+                maxAlertRules: planFeatures(org?.plan).maxAlertRules,
+                retentionDays: planFeatures(org?.plan).retentionDays,
+                maxSeats: planFeatures(org?.plan).maxSeats,
+                alertRulesUsed: this.alertRuleStore ? (await this.alertRuleStore.list(orgId)).length : 0,
             },
             usage,
         }
