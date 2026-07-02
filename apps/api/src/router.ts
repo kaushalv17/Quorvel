@@ -159,6 +159,32 @@ export async function handleRequest(
                 }
             }
 
+            if (req.path === "/v1/alert-rules") {
+                if (req.method === "GET") {
+                    return { status: 200, body: await svc.listAlertRules(orgId) }
+                }
+                if (req.method === "POST") {
+                    return {
+                        status: 201,
+                        body: await svc.createAlertRule(orgId, req.body ?? {}, actorId),
+                    }
+                }
+            }
+
+            const alertRuleMatch = req.path.match(/^\/v1\/alert-rules\/([^/]+)$/)
+            if (alertRuleMatch) {
+                const id = decodeURIComponent(alertRuleMatch[1])
+                if (req.method === "POST") {
+                    return {
+                        status: 200,
+                        body: await svc.updateAlertRule(orgId, id, req.body ?? {}, actorId),
+                    }
+                }
+                if (req.method === "DELETE") {
+                    return { status: 200, body: await svc.deleteAlertRule(orgId, id, actorId) }
+                }
+            }
+
             if (req.path === "/v1/billing/portal" && req.method === "POST") {
                 return { status: 200, body: await svc.createBillingPortal(orgId) }
             }
@@ -272,7 +298,7 @@ export async function handleRequest(
             )
         }
 
-        return runOrgScoped()
+        return await runOrgScoped()
     } catch (e) {
         if (e instanceof ApiError) {
             return { status: e.statusCode, body: { error: e.message, code: e.code } }

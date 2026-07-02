@@ -8,6 +8,14 @@ import type { ActionEvent, ActionEventLog, EventMetrics } from "./actionEvents"
 import type { DeadLetterRecord, DeadLetterStore } from "./deadLetters"
 import type { PaddleBilling, CheckoutResult, WebhookResult } from "./paddle"
 import type { EventBus } from "./bus"
+import { ALERT_TRIGGERS } from "./alertRules"
+import type {
+    AlertRuleRecord,
+    AlertRuleStore,
+    AlertTrigger,
+    CreateAlertRuleInput,
+    UpdateAlertRuleInput,
+} from "./alertRules"
 import type {
     ActionRecord,
     ActionStatus,
@@ -66,6 +74,7 @@ function idemFingerprint(req: { method: string; path: string; body: unknown }): 
 }
 
 export interface ServiceDeps {
+    alertRuleStore?: AlertRuleStore
 	actionEventLog?: ActionEventLog
     bus?: EventBus
     limiter?: UsageLimiter
@@ -81,6 +90,7 @@ export class QuorvelCloudService {
     private readonly deadLetters?: DeadLetterStore
     private readonly deadLetterReplay?: (rec: DeadLetterRecord) => Promise<void>
 	private readonly actionEventLog?: ActionEventLog
+    private readonly alertRuleStore?: AlertRuleStore
 
     constructor(private readonly store: Store, deps: ServiceDeps = {}) {
         this.bus = deps.bus
@@ -89,6 +99,7 @@ export class QuorvelCloudService {
         this.deadLetters = deps.deadLetters
         this.deadLetterReplay = deps.deadLetterReplay
 		this.actionEventLog = deps.actionEventLog
+        this.alertRuleStore = deps.alertRuleStore
     }
 
     async issueApiKey(input: IssueKeyInput): Promise<IssueKeyResult> {
@@ -566,6 +577,85 @@ export class QuorvelCloudService {
         }
         await this.audit(orgId, null, "onboarding.sample_seeded", undefined, { created })
         return { created }
+    }
+
+    // --- Alert rules (Phase 4-D) ---------------------------------------------
+    async listAlertRules(orgId: string): Promise<AlertRuleRecord[]> {
+        if (!this.alertRuleStore) return []
+        return this.alertRuleStore.list(orgId)
+    }
+
+    private normalizeTrigger(trigger: unknown): AlertTrigger {
+        if (typeof trigger !== "string" || !ALERT_TRIGGERS.includes(trigger as AlertTrigger)) {
+            throw badRequest(`trigger must be one of: ${ALERT_TRIGGERS.join(", ")}`)
+        }
+        return trigger as AlertTrigger
+    }
+
+    private normalizeChannels(channels: unknown): string[] {
+        if (!Array.isArray(channels) || channels.some((c) => typeof c !== "string")) {
+            throw badRequest("channels must be an array of channel names")
+        }
+        return channels as string[]
+    }
+
+    async createAlertRule(
+        orgId: string,
+        input: CreateAlertRuleInput,
+        actorId?: string | null,
+    ): Promise<AlertRuleRecord> {
+        if (!this.alertRuleStore) throw badRequest("alert rules are not configured")
+        const name = typeof input?.name === "string" ? input.name.trim() : ""
+        if (!name) throw badRequest("name is required")
+        const trigger = this.normalizeTrigger(input.trigger)
+        const channels = this.normalizeChannels(input.channels)
+        const rule = await this.alertRuleStore.create(orgId, newId("alr"), {
+            name,
+            trigger,
+            scope: input.scope ?? null,
+            channels,
+            enabled: input.enabled ?? true,
+        })
+        await this.audit(orgId, actorId, "alert_rule.created", rule.id, { name, trigger, channels })
+        return rule
+    }
+
+    async updateAlertRule(
+        orgId: string,
+        id: string,
+        patch: UpdateAlertRuleInput,
+        actorId?: string | null,
+    ): Promise<AlertRuleRecord> {
+        if (!this.alertRuleStore) throw badRequest("alert rules are not configured")
+        const clean: UpdateAlertRuleInput = {}
+        if (patch?.name !== undefined) {
+            const name = typeof patch.name === "string" ? patch.name.trim() : ""
+            if (!name) throw badRequest("name must be a non-empty string")
+            clean.name = name
+        }
+        if (patch?.trigger !== undefined) clean.trigger = this.normalizeTrigger(patch.trigger)
+        if (patch?.scope !== undefined) clean.scope = patch.scope ?? null
+        if (patch?.channels !== undefined) clean.channels = this.normalizeChannels(patch.channels)
+        if (patch?.enabled !== undefined) {
+            if (typeof patch.enabled !== "boolean") throw badRequest("enabled must be a boolean")
+            clean.enabled = patch.enabled
+        }
+        const updated = await this.alertRuleStore.update(orgId, id, clean)
+        if (!updated) throw new ApiError("alert rule not found", 404, "not_found")
+        await this.audit(orgId, actorId, "alert_rule.updated", id, clean)
+        return updated
+    }
+
+    async deleteAlertRule(
+        orgId: string,
+        id: string,
+        actorId?: string | null,
+    ): Promise<{ deleted: boolean }> {
+        if (!this.alertRuleStore) throw badRequest("alert rules are not configured")
+        const ok = await this.alertRuleStore.remove(orgId, id)
+        if (!ok) throw new ApiError("alert rule not found", 404, "not_found")
+        await this.audit(orgId, actorId, "alert_rule.deleted", id)
+        return { deleted: true }
     }
 
     // --- Dead-letter queue (Phase 3 reliability) ------------------------------
