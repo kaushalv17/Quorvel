@@ -180,7 +180,31 @@ export async function handleRequest(
                 return { status: 200, body: rows }
             }
 
-            if (req.path === "/v1/stats" && req.method === "POST") {
+            if (req.path === "/v1/events" && req.method === "GET") {
+				const status = req.query.status as ActionStatus | undefined
+				const limit = req.query.limit != null ? Number(req.query.limit) : undefined
+				return {
+					status: 200,
+					body: await svc.listEvents(orgId, {
+						status,
+						idempotencyKey: req.query.action,
+						since: req.query.since ?? null,
+						limit,
+					}),
+				}
+			}
+
+			if (req.path === "/v1/metrics" && req.method === "GET") {
+				return {
+					status: 200,
+					body: await svc.metrics(orgId, {
+						since: req.query.since ?? null,
+						until: req.query.until ?? null,
+					}),
+				}
+			}
+
+			if (req.path === "/v1/stats" && req.method === "POST") {
                 const b = req.body ?? {}
                 return {
                     status: 200,
@@ -192,7 +216,14 @@ export async function handleRequest(
                 }
             }
 
-            const m = req.path.match(/^\/v1\/actions\/([^/]+)(\/[a-z-]+)?$/)
+            const eventsMatch = req.path.match(/^\/v1\/actions\/([^/]+)\/events$/)
+			if (eventsMatch && req.method === "GET") {
+				const key = decodeURIComponent(eventsMatch[1])
+				const timeline = await svc.runTimeline(orgId, key)
+				return timeline ? { status: 200, body: timeline } : notFound
+			}
+
+			const m = req.path.match(/^\/v1\/actions\/([^/]+)(\/[a-z-]+)?$/)
             if (m) {
                 const key = decodeURIComponent(m[1])
                 const sub = m[2]

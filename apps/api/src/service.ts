@@ -4,6 +4,7 @@ import { actionCreated, actionTransition } from "./events"
 import { currentPeriod, planLimit, type UsageLimiter, type UsageSnapshot } from "./billing"
 import { generateApiKey, hashApiKey, keyPrefix, newId } from "./keys"
 import { toRecord, type Store } from "./store"
+import type { ActionEvent, ActionEventLog, EventMetrics } from "./actionEvents"
 import type { DeadLetterRecord, DeadLetterStore } from "./deadLetters"
 import type { PaddleBilling, CheckoutResult, WebhookResult } from "./paddle"
 import type { EventBus } from "./bus"
@@ -65,6 +66,7 @@ function idemFingerprint(req: { method: string; path: string; body: unknown }): 
 }
 
 export interface ServiceDeps {
+	actionEventLog?: ActionEventLog
     bus?: EventBus
     limiter?: UsageLimiter
     billing?: PaddleBilling
@@ -78,6 +80,7 @@ export class QuorvelCloudService {
     private readonly billing?: PaddleBilling
     private readonly deadLetters?: DeadLetterStore
     private readonly deadLetterReplay?: (rec: DeadLetterRecord) => Promise<void>
+	private readonly actionEventLog?: ActionEventLog
 
     constructor(private readonly store: Store, deps: ServiceDeps = {}) {
         this.bus = deps.bus
@@ -85,6 +88,7 @@ export class QuorvelCloudService {
         this.billing = deps.billing
         this.deadLetters = deps.deadLetters
         this.deadLetterReplay = deps.deadLetterReplay
+		this.actionEventLog = deps.actionEventLog
     }
 
     async issueApiKey(input: IssueKeyInput): Promise<IssueKeyResult> {
@@ -273,7 +277,58 @@ export class QuorvelCloudService {
         return res
     }
 
-    async getAction(orgId: string, key: string): Promise<ActionRecord | undefined> {
+    /**
+	 * Phase 4 observability: a run plus its full lifecycle timeline (the
+	 * ordered event log), for the per-run inspector view.
+	 */
+	async runTimeline(
+		orgId: string,
+		key: string,
+	): Promise<{ action: ActionRecord; events: ActionEvent[] } | undefined> {
+		const row = await this.store.getAction(orgId, key)
+		if (!row) return undefined
+		const events = this.actionEventLog
+			? await this.actionEventLog.listByRun(orgId, key)
+			: []
+		return { action: toRecord(row), events }
+	}
+
+	/** Cross-run recent event feed (newest first), for the activity view. */
+	async listEvents(
+		orgId: string,
+		filter: {
+			status?: ActionStatus
+			idempotencyKey?: string
+			since?: string | null
+			limit?: number
+		} = {},
+	): Promise<ActionEvent[]> {
+		if (!this.actionEventLog) return []
+		return this.actionEventLog.listRecent(orgId, filter)
+	}
+
+	/** Aggregate run metrics for a window, merged with the current usage snapshot. */
+	async metrics(
+		orgId: string,
+		window: { since?: string | null; until?: string | null } = {},
+	): Promise<EventMetrics & { usage: UsageSnapshot }> {
+		const base: EventMetrics = this.actionEventLog
+			? await this.actionEventLog.metrics(orgId, window)
+			: {
+				since: window.since ?? null,
+				until: window.until ?? null,
+				runs: 0,
+				events: 0,
+				outcomes: { succeeded: 0, failed: 0, denied: 0, rejected: 0 },
+				terminalRuns: 0,
+				errorRate: 0,
+				latencyMs: { count: 0, avg: null, p50: null, p95: null },
+			}
+		const usage = await this.usage(orgId)
+		return { ...base, usage }
+	}
+
+	async getAction(orgId: string, key: string): Promise<ActionRecord | undefined> {
         const row = await this.store.getAction(orgId, key)
         return row ? toRecord(row) : undefined
     }

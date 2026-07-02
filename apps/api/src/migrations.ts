@@ -15,6 +15,7 @@
 import { createHash } from "node:crypto"
 import { SCHEMA_SQL } from "./schema"
 import { DEAD_LETTERS_SQL } from "./deadLetters"
+import { ACTION_EVENTS_SQL } from "./actionEvents"
 
 export interface Migration {
     /** Stable, ordered id, e.g. "0004_add_org_region". Never reuse or rename. */
@@ -42,6 +43,7 @@ export const MIGRATIONS: Migration[] = [
     { id: "0001_baseline_schema", sql: SCHEMA_SQL },
     { id: "0002_idempotency_keys", sql: IDEMPOTENCY_SQL },
     { id: "0003_dead_letters", sql: DEAD_LETTERS_SQL },
+	{ id: "0004_action_events", sql: ACTION_EVENTS_SQL },
 ]
 
 /** Advisory-lock key so two booting instances can't migrate concurrently. */

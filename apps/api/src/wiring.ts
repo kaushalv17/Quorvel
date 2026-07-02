@@ -37,6 +37,13 @@ import {
     type UsageStore,
 } from "./billing"
 import { PaddleBilling } from "./paddle"
+import {
+	MemActionEventLog,
+	PgActionEventLog,
+	makeActionEventSink,
+	type ActionEventLog,
+	type ActionEventQueryable,
+} from "./actionEvents"
 
 export interface ServiceDepsBundle {
     deps: {
@@ -45,6 +52,7 @@ export interface ServiceDepsBundle {
         billing?: PaddleBilling
         deadLetters: DeadLetterStore
         deadLetterReplay: (rec: DeadLetterRecord) => Promise<void>
+		actionEventLog: ActionEventLog
     }
     bus: EventBus
     deadLetters: DeadLetterStore
@@ -118,10 +126,16 @@ export function buildDeps(
         ? new PgDeadLetterStore(opts.pool as unknown as SqlQueryable)
         : new MemDeadLetterStore()
     const sink = makeSink(deadLetters, () => newId("dlq"))
+
+	// --- Observability: persist every lifecycle event to the action timeline. ---
+	const actionEventLog: ActionEventLog = opts.pool
+		? new PgActionEventLog(opts.pool as unknown as ActionEventQueryable)
+		: new MemActionEventLog()
     // Named so a failure can be attributed to (and replayed against) one subscriber.
     const named: NamedSubscriber[] = [
         { name: "usage-meter", handle: meter.onEvent },
         { name: "alerts", handle: dispatcher.handle },
+		{ name: "event-log", handle: makeActionEventSink(actionEventLog) },
     ]
     const byName = new Map(named.map((n) => [n.name, n.handle]))
 
@@ -164,7 +178,7 @@ export function buildDeps(
     }
 
     return {
-        deps: { bus, limiter: meter, billing: guardedBilling, deadLetters, deadLetterReplay },
+        deps: { bus, limiter: meter, billing: guardedBilling, deadLetters, deadLetterReplay, actionEventLog },
         bus,
         deadLetters,
         close,
