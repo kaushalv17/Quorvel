@@ -269,8 +269,11 @@ export class QuorvelCloudService {
         if (!input || typeof input.idempotencyKey !== "string" || !input.tool) {
             throw badRequest("idempotencyKey and tool are required")
         }
+        // Atomic quota enforcement: reserve a usage slot up front. The store's
+        // increment is atomic, so concurrent inserts each take a distinct slot and
+        // any over-limit reservation is rolled back inside reserve() -- no overshoot.
         if (this.limiter) {
-            const verdict = await this.limiter.check(orgId)
+            const verdict = await this.limiter.reserve(orgId)
             if (!verdict.allowed) throw quotaError(verdict.reason ?? "quota exceeded")
         }
         const normalized: InsertPendingInput = {
@@ -280,8 +283,20 @@ export class QuorvelCloudService {
             args: input.args,
             cost: input.cost,
         }
-        const res = await this.store.insertPending(orgId, normalized)
-        if (res.inserted && this.bus) {
+        let res: InsertResult
+        try {
+            res = await this.store.insertPending(orgId, normalized)
+        } catch (err) {
+            if (this.limiter) await this.limiter.release(orgId)
+            throw err
+        }
+        if (!res.inserted) {
+            // Idempotent duplicate: no new row was created, so refund the slot we
+            // reserved above. Duplicates must never consume quota.
+            if (this.limiter) await this.limiter.release(orgId)
+            return res
+        }
+        if (this.bus) {
             const row = await this.store.getAction(orgId, normalized.idempotencyKey)
             if (row) await this.bus.publish(actionCreated(row))
         }

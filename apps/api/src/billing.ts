@@ -82,8 +82,10 @@ export interface UsageVerdict {
 	reason?: string
 }
 export interface UsageLimiter {
-	check(orgId: string): Promise<UsageVerdict>
-	usage(orgId: string): Promise<UsageSnapshot>
+    check(orgId: string): Promise<UsageVerdict>
+    reserve(orgId: string): Promise<UsageVerdict>
+    release(orgId: string): Promise<void>
+    usage(orgId: string): Promise<UsageSnapshot>
 }
 export interface UsageReporter {
 	report(orgId: string, value: number): Promise<void>
@@ -109,7 +111,29 @@ export class UsageMeter implements UsageLimiter {
 		return { allowed: true }
 	}
 
-	async usage(orgId: string): Promise<UsageSnapshot> {
+	async reserve(orgId: string): Promise<UsageVerdict> {
+        const plan = await this.plans(orgId)
+        const limit = planLimit(plan)
+        const period = currentPeriod()
+        // Atomically claim a slot; the store returns the post-increment count.
+        const next = await this.store.increment(orgId, period, 1)
+        if (limit !== Infinity && next > limit) {
+            // Over the limit: roll back the reservation and deny.
+            await this.store.increment(orgId, period, -1)
+            return {
+                allowed: false,
+                reason: `monthly quota of ${limit} reached for plan ${plan}`,
+            }
+        }
+        return { allowed: true }
+    }
+
+    async release(orgId: string): Promise<void> {
+        // Refund a previously reserved slot (e.g. an idempotent duplicate).
+        await this.store.increment(orgId, currentPeriod(), -1)
+    }
+
+    async usage(orgId: string): Promise<UsageSnapshot> {
 		const plan = await this.plans(orgId)
 		const limit = planLimit(plan)
 		const period = currentPeriod()
@@ -120,7 +144,7 @@ export class UsageMeter implements UsageLimiter {
 
 	onEvent = async (e: DomainEvent): Promise<void> => {
 		if (e.type !== "action.created") return
-		await this.store.increment(e.orgId, currentPeriod(), 1)
+		// counting is atomic in reserve(); onEvent only reports usage
 		if (this.reporter) await this.reporter.report(e.orgId, 1)
 	}
 }
