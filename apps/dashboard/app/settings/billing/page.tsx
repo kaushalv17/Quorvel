@@ -10,7 +10,10 @@ export const dynamic = "force-dynamic"
 export default async function BillingPage() {
 	const me = await serverClient().me()
 	const { plan } = me.org
-	const { used, limit } = me.usage
+	const { used, limit, overage } = me.usage
+  const { features } = me
+  const fmt = (n: number | null) =>
+    n === null || !Number.isFinite(n) ? "Unlimited" : String(n)
 	const finiteLimit = Number.isFinite(limit)
 	const pct =
 		finiteLimit && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
@@ -34,6 +37,11 @@ export default async function BillingPage() {
 						{finiteLimit ? ` / ${limit}` : " / \u221e"}
 					</b>
 					<span>actions this period</span>
+            {overage > 0 ? (
+              <span className="overage-note">
+                {overage.toLocaleString()} over your plan limit
+              </span>
+            ) : null}
 				</div>
 				{finiteLimit ? (
 					<div className="usage-meter">
@@ -42,7 +50,25 @@ export default async function BillingPage() {
 				) : null}
 			</div>
 
-			<div className="billing-actions">
+			<div className="plan-limits card">
+        <h3>Plan limits</h3>
+        <ul className="limit-list">
+          <li>
+            <span>Alert rules</span>
+            <b>{features.alertRulesUsed} / {fmt(features.maxAlertRules)}</b>
+          </li>
+          <li>
+            <span>History retention</span>
+            <b>{Number.isFinite(features.retentionDays) ? `${features.retentionDays} days` : "Unlimited"}</b>
+          </li>
+          <li>
+            <span>Team seats</span>
+            <b>{fmt(features.maxSeats)}</b>
+          </li>
+        </ul>
+      </div>
+
+      <div className="billing-actions">
 				<ManageBillingButton />
 			</div>
 

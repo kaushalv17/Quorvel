@@ -53,6 +53,7 @@ export interface UsageSnapshot {
   percentUsed: number
   nearLimit: boolean
   over: boolean
+  overage: number
 }
 
 export interface CheckoutResult {
@@ -184,6 +185,7 @@ export interface AuditEntry {
 
 export interface MeResult {
 	org: { id: string; name: string; plan: string; createdAt: string }
+  features: { maxAlertRules: number | null; retentionDays: number | null; maxSeats: number | null; alertRulesUsed: number }
 	usage: UsageSnapshot
 }
 

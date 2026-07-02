@@ -6,12 +6,24 @@ export function UsageBanner({ usage }: { usage: UsageSnapshot }) {
   if (!usage.nearLimit && !usage.over) return null
   const pct = Math.round(usage.percentUsed * 100)
   const tone = usage.over ? "usage-banner-over" : "usage-banner-near"
+  // Free plans hard-cap (new actions blocked); paid plans burst past the limit
+  // and accrue overage that is reported, not auto-charged.
+  const blocked = usage.over && usage.plan === "free"
   return (
     <div className={`usage-banner ${tone}`} role="status">
-      {usage.over ? (
+      {blocked ? (
         <span>
           <b>You&apos;ve hit your {usage.plan} quota.</b> New actions are blocked
           until usage resets ({usage.period}) or you upgrade your plan.
+        </span>
+      ) : usage.over ? (
+        <span>
+          <b>
+            You&apos;re {usage.overage.toLocaleString()} action
+            {usage.overage === 1 ? "" : "s"} over your {usage.plan} quota.
+          </b>{" "}
+          Usage keeps flowing this period ({usage.period}); overage isn&apos;t
+          billed automatically.
         </span>
       ) : (
         <span>
