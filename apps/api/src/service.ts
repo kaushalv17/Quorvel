@@ -67,6 +67,10 @@ export function toPublicKey(rec: ApiKeyRecord): ApiKeyPublic {
     }
 }
 
+/** How long an in-flight idempotency claim may live before a retry reclaims it.
+ *  A crash between claiming and completing would otherwise 409 forever. */
+const IDEMPOTENCY_STALE_MS = Number(process.env.QUORVEL_IDEMPOTENCY_STALE_MS ?? 60_000)
+
 /** Stable hash of method+path+body, to detect Idempotency-Key reuse with a different request. */
 function idemFingerprint(req: { method: string; path: string; body: unknown }): string {
     const canonical = JSON.stringify({ m: req.method, p: req.path, b: req.body ?? null })
@@ -243,6 +247,14 @@ export class QuorvelCloudService {
                 )
             }
             if (ex.statusCode == null) {
+                // In-progress claim. If older than the stale window, a previous
+                // attempt likely crashed between claiming and completing, leaving
+                // an orphaned claim that would 409 forever -- reclaim it.
+                const ageMs = Date.now() - Date.parse(ex.createdAt)
+                if (Number.isFinite(ageMs) && ageMs > IDEMPOTENCY_STALE_MS) {
+                    await this.store.deleteIdempotency(orgId, idemKey).catch(() => {})
+                    return this.withIdempotency(orgId, idemKey, req, run)
+                }
                 throw new ApiError(
                     "a request with this Idempotency-Key is still being processed",
                     409,

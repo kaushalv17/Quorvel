@@ -23,6 +23,25 @@ export interface RawResponse {
 
 const notFound: RawResponse = { status: 404, body: { error: "not found", code: "not_found" } }
 
+/** Parse a `?limit=` value: a positive integer, capped at 1000. Rejects junk with 400. */
+function parseLimit(raw: string | undefined): number | undefined {
+    if (raw == null) return undefined
+    const n = Number(raw)
+    if (!Number.isInteger(n) || n < 1 || n > 1000) {
+        throw new ApiError("limit must be an integer between 1 and 1000", 400, "invalid_query")
+    }
+    return n
+}
+
+/** Parse an optional ISO-8601 timestamp query value. Rejects junk with 400. */
+function parseIsoParam(raw: string | undefined, field: string): string | null {
+    if (raw == null || raw === "") return null
+    if (Number.isNaN(Date.parse(raw))) {
+        throw new ApiError(`${field} must be an ISO-8601 timestamp`, 400, "invalid_query")
+    }
+    return raw
+}
+
 async function resolveDashboardOrg(
     svc: QuorvelCloudService,
     dashboardSecret: string | undefined,
@@ -136,13 +155,13 @@ export async function handleRequest(
             }
 
             if (req.path === "/v1/audit" && req.method === "GET") {
-                const limit = req.query.limit != null ? Number(req.query.limit) : undefined
+                const limit = parseLimit(req.query.limit)
                 return { status: 200, body: await svc.listAuditLog(orgId, limit) }
             }
 
             // Dead-letter queue: operator visibility + manual replay/discard.
             if (req.path === "/v1/dlq" && req.method === "GET") {
-                const limit = req.query.limit != null ? Number(req.query.limit) : undefined
+                const limit = parseLimit(req.query.limit)
                 return { status: 200, body: await svc.listDeadLetters(orgId, limit) }
             }
 
@@ -203,7 +222,7 @@ export async function handleRequest(
 
             if (req.path === "/v1/actions" && req.method === "GET") {
                 const status = req.query.status as ActionStatus | undefined
-                const limit = req.query.limit != null ? Number(req.query.limit) : undefined
+                const limit = parseLimit(req.query.limit)
                 const rows = status
                     ? await svc.listByStatus(orgId, status, limit)
                     : await svc.listRecent(orgId, limit)
@@ -212,13 +231,13 @@ export async function handleRequest(
 
             if (req.path === "/v1/events" && req.method === "GET") {
 				const status = req.query.status as ActionStatus | undefined
-				const limit = req.query.limit != null ? Number(req.query.limit) : undefined
+				const limit = parseLimit(req.query.limit)
 				return {
 					status: 200,
 					body: await svc.listEvents(orgId, {
 						status,
 						idempotencyKey: req.query.action,
-						since: req.query.since ?? null,
+						since: parseIsoParam(req.query.since, "since"),
 						limit,
 					}),
 				}
@@ -228,8 +247,8 @@ export async function handleRequest(
 				return {
 					status: 200,
 					body: await svc.metrics(orgId, {
-						since: req.query.since ?? null,
-						until: req.query.until ?? null,
+						since: parseIsoParam(req.query.since, "since"),
+						until: parseIsoParam(req.query.until, "until"),
 					}),
 				}
 			}

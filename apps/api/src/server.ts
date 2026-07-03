@@ -14,7 +14,7 @@ export interface ServerOptions {
 }
 
 export function buildServer(store: Store, opts: ServerOptions = {}) {
-    const app = Fastify({ logger: false })
+    const app = Fastify({ logger: false, trustProxy: true })
 
     // Capture the raw JSON body so webhook signatures can be verified.
     app.addContentTypeParser(
