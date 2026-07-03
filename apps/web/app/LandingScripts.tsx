@@ -28,7 +28,7 @@ export default function LandingScripts() {
         try {
           const Paddle = (window as any).Paddle
           if (Paddle && typeof Paddle.Initialize === 'function') {
-            Paddle.Initialize({ token: 'live_2f6c5a2fc2044c85ff7a5fdc010' })
+            Paddle.Initialize({ token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? '' })
           }
         } catch (e) {
           /* checkout simply won't open if Paddle fails to load */

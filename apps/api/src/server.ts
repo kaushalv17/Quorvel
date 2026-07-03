@@ -55,7 +55,7 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
         .map((o) => o.trim())
         .filter(Boolean)
     const allowedHeaders =
-        "authorization,content-type,idempotency-key,x-admin-secret,x-dashboard-secret,x-clerk-org-id,x-clerk-user-id,x-clerk-org-name"
+        "authorization,content-type,idempotency-key,x-dashboard-secret,x-clerk-org-id,x-clerk-user-id,x-clerk-org-name"
 
     app.addHook("onRequest", async (req: any, reply: any) => {
         reply.header("x-content-type-options", "nosniff")

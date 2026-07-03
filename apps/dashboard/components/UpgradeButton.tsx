@@ -3,11 +3,10 @@
 import { useCallback, useState } from "react"
 import { startCheckout } from "../app/actions"
 
-// Public client-side token (safe to ship in the browser). Falls back to the
-// known live token so the dashboard works without extra env config, but can be
-// overridden per-environment via NEXT_PUBLIC_PADDLE_CLIENT_TOKEN.
+// Public Paddle client-side token (publishable; safe in the browser).
+// Configured per-environment via NEXT_PUBLIC_PADDLE_CLIENT_TOKEN (Vercel + .env.local).
 const PADDLE_CLIENT_TOKEN =
-	process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "live_2f6c5a2fc2044c85ff7a5fdc010"
+	process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? ""
 
 const PADDLE_JS_SRC = "https://cdn.paddle.com/paddle/v2/paddle.js"
 
