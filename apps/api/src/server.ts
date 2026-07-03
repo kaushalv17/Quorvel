@@ -31,6 +31,37 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
         },
     )
 
+    // --- Security headers + CORS (no external deps) ---
+    // Origin allowlist is env-driven (comma-separated); defaults to the prod
+    // dashboard. Non-browser callers (SDK/curl) send no Origin -> unaffected.
+    const corsOrigins = (process.env.QUORVEL_CORS_ORIGINS ?? "https://app.quorvel.tech")
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean)
+    const allowedHeaders =
+        "authorization,content-type,idempotency-key,x-admin-secret,x-dashboard-secret,x-clerk-org-id,x-clerk-user-id,x-clerk-org-name"
+
+    app.addHook("onRequest", async (req: any, reply: any) => {
+        reply.header("x-content-type-options", "nosniff")
+        reply.header("x-frame-options", "DENY")
+        reply.header("referrer-policy", "no-referrer")
+        reply.header("x-dns-prefetch-control", "off")
+        reply.header("strict-transport-security", "max-age=15552000; includeSubDomains")
+
+        const origin = req.headers?.["origin"] as string | undefined
+        if (origin && corsOrigins.includes(origin)) {
+            reply.header("access-control-allow-origin", origin)
+            reply.header("vary", "Origin")
+            reply.header("access-control-allow-methods", "GET,POST,DELETE,OPTIONS")
+            reply.header("access-control-allow-headers", allowedHeaders)
+            reply.header("access-control-max-age", "600")
+        }
+
+        if (req.method === "OPTIONS") {
+            reply.code(204)
+            return reply.send()
+        }
+    })
     const svc = new QuorvelCloudService(store, opts.deps)
     const adminSecret = opts.adminSecret ?? process.env.QUORVEL_ADMIN_SECRET
     const dashboardSecret = opts.dashboardSecret ?? process.env.DASHBOARD_SERVICE_SECRET
