@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Quorvel — Hope Is Not a Retry Strategy',
   description:
     'Quorvel is the reliability layer for AI agents: a durable ledger, exactly-once execution, human-in-the-loop approvals, and crash-safe recovery.',
-  icons: { icon: '/assets/favicon.png', apple: '/assets/favicon.png' },
+  icons: { icon: '/assets/favicon.png?v=2', apple: '/assets/favicon.png?v=2' },
   openGraph: {
     type: 'website',
     url: 'https://quorvel.tech/',
