@@ -18,17 +18,14 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
     const app = Fastify({
         logger: {
             level: process.env.LOG_LEVEL ?? "info",
-            // Never log credentials.
             redact: [
                 "req.headers.authorization",
-                eq.headers['x-dashboard-secret'],
-                eq.headers['x-admin-secret'],
-                eq.headers['paddle-signature'],
+                "req.headers['x-dashboard-secret']",
+                "req.headers['x-admin-secret']",
+                "req.headers['paddle-signature']",
             ],
         },
         trustProxy: true,
-        // Reuse an inbound x-request-id (e.g. from Render's proxy) or mint one,
-        // so every log line for a request shares one correlation id.
         genReqId: (req) => {
             const rid = req.headers["x-request-id"]
             return (typeof rid === "string" && rid) || randomUUID()
