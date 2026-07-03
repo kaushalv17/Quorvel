@@ -180,5 +180,10 @@ await (async () => {
 		assert.equal((q.body as any[])[0].idempotencyKey, "p")
 	})
 
+  await it("POST /v1/webhooks/paddle rejects a forged signature with 4xx", async () => {
+    const svc = new QuorvelCloudService(new MemStore())
+    const res = await call(svc, { method: "POST", path: "/v1/webhooks/paddle", headers: { "paddle-signature": "bogus" }, body: {} })
+    assert.ok(res.status >= 400 && res.status < 500, "forged webhook must be 4xx, got " + res.status)
+  })
 	summary()
 })()

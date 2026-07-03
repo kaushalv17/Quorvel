@@ -50,12 +50,23 @@ export async function handleRequest(
         }
 
         if (req.method === "POST" && req.path === "/v1/webhooks/paddle") {
-            return {
-                status: 200,
-                body: await svc.handlePaddleWebhook(
-                    req.rawBody ?? "",
-                    req.headers["paddle-signature"],
-                ),
+            try {
+                return {
+                    status: 200,
+                    body: await svc.handlePaddleWebhook(
+                        req.rawBody ?? "",
+                        req.headers["paddle-signature"],
+                    ),
+                }
+            } catch (e) {
+                // A forged/invalid signature or malformed payload must be a 4xx
+                // (never a 5xx, which Paddle would retry) and never mutates state.
+                // Genuine internal errors still bubble to the 500 handler.
+                const m = e instanceof Error ? e.message : "invalid webhook"
+                if (m.includes("invalid paddle signature") || m.includes("invalid paddle payload")) {
+                    return { status: 400, body: { error: m, code: "invalid_webhook" } }
+                }
+                throw e
             }
         }
 
