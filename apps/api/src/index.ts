@@ -52,7 +52,7 @@ export async function main(): Promise<void> {
         store = new MemStore()
     }
 
-    const { deps } = buildDeps(store, { pool: pool as unknown as SqlPool | undefined })
+    const { deps, close } = buildDeps(store, { pool: pool as unknown as SqlPool | undefined })
     const app = buildServer(store, { adminSecret: process.env.QUORVEL_ADMIN_SECRET, deps })
 
     const port = Number(process.env.PORT ?? 8080)
@@ -75,6 +75,8 @@ export async function main(): Promise<void> {
         hardTimeout.unref()
         try {
             await app.close()
+            // Close the event bus (BullMQ queue + Redis) before the DB pool.
+            await close()
             if (pool) await pool.end()
             clearTimeout(hardTimeout)
             console.log("[shutdown] clean exit")
