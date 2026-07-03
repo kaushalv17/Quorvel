@@ -31,6 +31,17 @@ for (const envPath of [".env", join(__dirname, "..", "..", ".env")]) {
 const PORT = Number(process.env.PORT || 4317) // 4317 = OTLP's port, a wink to observability
 const FORCE_DEMO = process.argv.includes("--demo") || process.env.QUORVEL_DEMO === "1" || !process.env.DATABASE_URL
 
+// SECURITY: bind to loopback by default so this unauthenticated observability
+// server (it reads your real belay_* tables) is never exposed to the network.
+// To expose it deliberately set QUORVEL_DASHBOARD_HOST plus a required token.
+const HOST = process.env.QUORVEL_DASHBOARD_HOST || "127.0.0.1"
+const DASH_TOKEN = process.env.QUORVEL_DASHBOARD_TOKEN || ""
+const IS_LOOPBACK = HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1"
+if (!IS_LOOPBACK && !DASH_TOKEN) {
+  console.error("Refusing to bind Mission Control to a non-loopback host without QUORVEL_DASHBOARD_TOKEN set.")
+  process.exit(1)
+}
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -374,6 +385,13 @@ async function main() {
   const server = createServer(async (req, res) => {
     const { pathname, searchParams } = new URL(req.url, `http://${req.headers.host}`)
     try {
+      // Token gate (enforced only when QUORVEL_DASHBOARD_TOKEN is set).
+      if (DASH_TOKEN) {
+        const authz = req.headers["authorization"] || ""
+        const bearer = /^Bearer\s+(.+)$/i.exec(authz)?.[1]
+        const token = bearer || searchParams.get("token") || ""
+        if (token !== DASH_TOKEN) return sendJson(res, 401, { error: "unauthorized" })
+      }
       if (pathname === "/api/meta") return sendJson(res, 200, { mode: source.kind, port: PORT, version: "0.5.0" })
       if (pathname === "/api/overview") return sendJson(res, 200, await source.overview())
       if (pathname === "/api/runs") return sendJson(res, 200, await source.runs(Number(searchParams.get("limit")) || 40))
@@ -411,7 +429,7 @@ async function main() {
     } catch (e) { /* ignore transient */ }
   }, 2000)
 
-  server.listen(PORT, () => {
+  server.listen(PORT, HOST, () => {
     console.log(`\u2192 http://localhost:${PORT}`)
   })
 }
