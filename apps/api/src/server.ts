@@ -2,6 +2,7 @@
 // delegates ALL logic to handleRequest (router.ts), so what we unit-test is what
 // serves traffic.
 import Fastify from "fastify"
+import { randomUUID } from "node:crypto"
 import { handleRequest, API_VERSION } from "./router"
 import { FixedWindowRateLimiter, identifyCaller } from "./rateLimit"
 import { QuorvelCloudService, type ServiceDeps } from "./service"
@@ -14,7 +15,25 @@ export interface ServerOptions {
 }
 
 export function buildServer(store: Store, opts: ServerOptions = {}) {
-    const app = Fastify({ logger: false, trustProxy: true })
+    const app = Fastify({
+        logger: {
+            level: process.env.LOG_LEVEL ?? "info",
+            // Never log credentials.
+            redact: [
+                "req.headers.authorization",
+                eq.headers['x-dashboard-secret'],
+                eq.headers['x-admin-secret'],
+                eq.headers['paddle-signature'],
+            ],
+        },
+        trustProxy: true,
+        // Reuse an inbound x-request-id (e.g. from Render's proxy) or mint one,
+        // so every log line for a request shares one correlation id.
+        genReqId: (req) => {
+            const rid = req.headers["x-request-id"]
+            return (typeof rid === "string" && rid) || randomUUID()
+        },
+    })
 
     // Capture the raw JSON body so webhook signatures can be verified.
     app.addContentTypeParser(
@@ -47,6 +66,7 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
         reply.header("referrer-policy", "no-referrer")
         reply.header("x-dns-prefetch-control", "off")
         reply.header("strict-transport-security", "max-age=15552000; includeSubDomains")
+        reply.header("x-request-id", req.id)
 
         const origin = req.headers?.["origin"] as string | undefined
         if (origin && corsOrigins.includes(origin)) {
