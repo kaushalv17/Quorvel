@@ -138,12 +138,6 @@ await (async () => {
 		assert.equal(res.status, 200)
 	})
 
-	await it("POST /v1/keys requires the admin secret", async () => {
-		const svc = new QuorvelCloudService(new MemStore())
-		assert.equal((await call(svc, { method: "POST", path: "/v1/keys", headers: {} })).status, 401)
-		const ok = await call(svc, { method: "POST", path: "/v1/keys", headers: { "x-admin-secret": ADMIN }, body: {} })
-		assert.equal(ok.status, 201)
-	})
 
 	await it("protected routes require Bearer auth", async () => {
 		const svc = new QuorvelCloudService(new MemStore())
@@ -152,8 +146,7 @@ await (async () => {
 
 	await it("full HTTP lifecycle: insert -> running -> succeeded -> get -> stats -> timeline -> usage", async () => {
 		const svc = new QuorvelCloudService(new MemStore())
-		const keyRes = await call(svc, { method: "POST", path: "/v1/keys", headers: { "x-admin-secret": ADMIN }, body: {} })
-		const apiKey = (keyRes.body as any).apiKey as string
+		const { apiKey } = await svc.issueApiKey({})
 		const auth = { authorization: `Bearer ${apiKey}` }
 		assert.equal((await call(svc, { method: "POST", path: "/v1/actions", headers: auth, body: { idempotencyKey: "x", tool: "email", cost: 2 } })).status, 200)
 		assert.equal((await call(svc, { method: "POST", path: "/v1/actions/x/running", headers: auth, body: {} })).status, 204)
@@ -170,15 +163,15 @@ await (async () => {
 
 	await it("GET unknown action -> 404; tenants are isolated", async () => {
 		const svc = new QuorvelCloudService(new MemStore())
-		const k1 = (await call(svc, { method: "POST", path: "/v1/keys", headers: { "x-admin-secret": ADMIN }, body: {} })).body as any
-		const k2 = (await call(svc, { method: "POST", path: "/v1/keys", headers: { "x-admin-secret": ADMIN }, body: {} })).body as any
+		const k1 = await svc.issueApiKey({})
+		const k2 = await svc.issueApiKey({})
 		await call(svc, { method: "POST", path: "/v1/actions", headers: { authorization: `Bearer ${k1.apiKey}` }, body: { idempotencyKey: "secret", tool: "t" } })
 		assert.equal((await call(svc, { method: "GET", path: "/v1/actions/secret", headers: { authorization: `Bearer ${k2.apiKey}` } })).status, 404)
 	})
 
 	await it("GET /v1/actions?status=awaiting_approval lists the approval queue", async () => {
 		const svc = new QuorvelCloudService(new MemStore())
-		const k = (await call(svc, { method: "POST", path: "/v1/keys", headers: { "x-admin-secret": ADMIN }, body: {} })).body as any
+		const k = await svc.issueApiKey({})
 		const auth = { authorization: `Bearer ${k.apiKey}` }
 		await call(svc, { method: "POST", path: "/v1/actions", headers: auth, body: { idempotencyKey: "p", tool: "refund" } })
 		await call(svc, { method: "POST", path: "/v1/actions/p/awaiting-approval", headers: auth, body: { reason: "big refund" } })

@@ -53,13 +53,12 @@ DATABASE_URL=postgres://... QUORVEL_ADMIN_SECRET=dev pnpm --filter @quorvel/clou
 
 ## Endpoints
 
-Every `/v1` route except `POST /v1/keys` requires `Authorization: Bearer <key>`
+Every `/v1` route requires `Authorization: Bearer <key>`
 and is scoped to that key's org. Action routes map 1:1 to `LedgerStore` methods.
 
 | Method | Path | Auth | LedgerStore method |
 | --- | --- | --- | --- |
 | GET | `/health` | none | — (liveness) |
-| POST | `/v1/keys` | `x-admin-secret` | — (mint org API key) |
 | POST | `/v1/actions` | Bearer | `insertPending` → `{ inserted, existing? }` |
 | GET | `/v1/actions/:key` | Bearer | `get` (200, or 404 → `undefined`) |
 | GET | `/v1/actions?status=&limit=` | Bearer | `listByStatus` |

@@ -49,13 +49,6 @@ export async function handleRequest(
             return { status: 200, body: { ok: true, service: "belay-cloud-api", version: API_VERSION } }
         }
 
-        if (req.method === "POST" && req.path === "/v1/keys") {
-            if (!adminSecret || req.headers["x-admin-secret"] !== adminSecret) {
-                return { status: 401, body: { error: "admin secret required", code: "unauthorized" } }
-            }
-            return { status: 201, body: await svc.issueApiKey(req.body ?? {}) }
-        }
-
         if (req.method === "POST" && req.path === "/v1/webhooks/paddle") {
             return {
                 status: 200,

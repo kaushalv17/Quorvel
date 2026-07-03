@@ -16,7 +16,7 @@ Copy `.env.example` to `.env.local` and set:
 
 ```
 QUORVEL_API_URL=http://localhost:8080
-QUORVEL_API_KEY=qrv_live_...   # minted via POST /v1/keys on the cloud API
+QUORVEL_API_KEY=qrv_live_...   # created from the dashboard (Settings -> API keys)
 ```
 
 ## Develop
