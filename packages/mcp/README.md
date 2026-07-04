@@ -85,7 +85,7 @@ A parked call returns:
 | `guard(ledger, name, handler, binding?)` | Wrap a raw `(args, extra) => CallToolResult` handler. |
 | `approve` / `reject` / `listPendingApprovals` | Manage the durable approvals inbox. |
 | `budget` / `rateLimit` / `requireApprovalWhen` / `denyWhen` | Policies. |
-| `InMemoryLedger` | Dev ledger (use `PostgresLedger` from `belay` in prod). |
+| `InMemoryLedger` | Dev ledger (use `PostgresLedger` from `@quorvel/core` in prod). |
 
 ### `QuorvelBinding`
 

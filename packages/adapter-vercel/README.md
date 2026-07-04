@@ -26,7 +26,7 @@ import { openai } from "@ai-sdk/openai"
 import { z } from "zod"
 import { createQuorvel } from "@quorvel/adapter-vercel"
 
-const belay = createQuorvel({
+const quorvel = createQuorvel({
 	budget: { maxCostCents: 500 },
 	perTool: {
 		refund: {
@@ -38,7 +38,7 @@ const belay = createQuorvel({
 	onEvent: (e) => missionControl.publish(e), // live dashboard feed
 })
 
-const tools = belay.wrap({
+const tools = quorvel.wrap({
 	search: tool({
 		description: "Search the catalog",
 		parameters: z.object({ q: z.string() }),
@@ -58,7 +58,7 @@ await generateText({ model: openai("gpt-4o"), tools, prompt: "..." })
 
 Two approval modes:
 
-- **`interrupt`** (default) — a gated tool throws `ApprovalRequiredError`. Catch it, surface the pending approval to a reviewer, and re-invoke the same call after `belay.approve(id)`. The idempotency key guarantees it resumes, not duplicates.
+- **`interrupt`** (default) — a gated tool throws `ApprovalRequiredError`. Catch it, surface the pending approval to a reviewer, and re-invoke the same call after `quorvel.approve(id)`. The idempotency key guarantees it resumes, not duplicates.
 - **`wait`** — the call blocks until the approval is resolved (via your `waitForApproval` callback or store polling).
 
 ```ts
@@ -69,7 +69,7 @@ try {
 } catch (e) {
 	if (e instanceof ApprovalRequiredError) {
 		// show e.approvalId in your UI; later:
-		await belay.approve(e.approvalId, "reviewer@acme.com")
+		await quorvel.approve(e.approvalId, "reviewer@acme.com")
 		// re-run the exact same call -> now it executes
 	}
 }

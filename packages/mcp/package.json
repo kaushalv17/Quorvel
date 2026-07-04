@@ -21,7 +21,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [
-    "belay",
+    "quorvel",
     "mcp",
     "model-context-protocol",
     "modelcontextprotocol",

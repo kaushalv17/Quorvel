@@ -24,7 +24,7 @@ import type {
 export interface HostedLedgerOptions {
   /** Quorvel API key (e.g. "qrv_live_..."). Sent as a Bearer token. */
   apiKey: string
-  /** Base URL of the Quorvel Cloud API. Defaults to https://api.belay.dev. */
+  /** Base URL of the Quorvel Cloud API. Defaults to https://api.quorvel.tech. */
   baseUrl?: string
   /** Override the fetch implementation (tests, custom runtimes). */
   fetch?: typeof fetch

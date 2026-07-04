@@ -13,7 +13,7 @@ It's a drop-in: the wrapped tool keeps its `name`, `description`, and `schema`, 
 ## Install
 
 ```bash
-pnpm add @quorvel/langchain belay @langchain/core @langchain/langgraph
+pnpm add @quorvel/langchain @quorvel/core @langchain/core @langchain/langgraph
 ```
 
 `@langchain/core` and `@langchain/langgraph` are optional peer dependencies — install whichever your app already uses.
@@ -106,7 +106,7 @@ Policy precedence is **deny > require_approval > allow**.
 - `withQuorvel(ledger, tool, binding?)` / `withQuorvelAll(ledger, tools, binding?)`
 - `createToolRunner(ledger, tools, options?)` → `{ runToolCall, runToolCalls, runFromMessage }`
 - `guard(ledger, name, handler, binding?)`
-- Re-exported from `belay`: `approve`, `reject`, `listPendingApprovals`
+- Re-exported from `@quorvel/core`: `approve`, `reject`, `listPendingApprovals`
 
 ## License
 

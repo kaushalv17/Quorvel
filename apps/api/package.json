@@ -11,7 +11,7 @@
     "test": "tsx test/api.test.ts && tsx test/queue.test.ts && tsx test/alerts.test.ts && tsx test/billing.test.ts && tsx test/paddle.test.ts && tsx test/idempotency.test.ts && tsx test/ratelimit.test.ts && tsx test/dlq.test.ts && tsx test/migrations.test.ts && tsx test/resilience.test.ts && tsx test/observability.test.ts && tsx test/metrics.test.ts && tsx test/alertRules.test.ts && tsx test/alertRulesHttp.test.ts && tsx test/usageNotifier.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "keywords": ["belay", "reliability", "ledger", "fastify", "postgres", "redis", "bullmq", "idempotency", "approvals", "billing", "agents"],
+  "keywords": ["quorvel", "reliability", "ledger", "fastify", "postgres", "redis", "bullmq", "idempotency", "approvals", "billing", "agents"],
   "license": "MIT",
   "dependencies": {
     "bullmq": "^5.7.0",

@@ -9,12 +9,12 @@ rewriting your agent. Works with **both** OpenAI surfaces:
 1. **OpenAI Agents SDK** (`@openai/agents`) → `withQuorvel` / `withQuorvelAll`
 2. **Classic function calling** (Chat Completions / Responses) → `createToolRunner` / `guard`
 
-> Requires the `belay` core (Phases 1–4) for the ledger + policy engine.
+> Requires `@quorvel/core` (Phases 1–4) for the ledger + policy engine.
 
 ## Install
 
 ```bash
-pnpm add @quorvel/openai belay
+pnpm add @quorvel/openai @quorvel/core
 ```
 
 ## 1) OpenAI Agents SDK

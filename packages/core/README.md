@@ -1,4 +1,4 @@
-# belay
+# @quorvel/core
 
 > It catches your AI agent when it falls.
 
@@ -8,7 +8,7 @@ deterministic **idempotency key** — the foundation of exactly-once tool calls.
 ## Install (once published)
 
 ```bash
-npm install belay
+npm install @quorvel/core
 ```
 
 ## Usage

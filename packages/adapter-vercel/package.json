@@ -22,7 +22,7 @@
 		"test": "tsx test/smoke.ts"
 	},
 	"keywords": [
-		"belay",
+		"quorvel",
 		"vercel-ai-sdk",
 		"ai",
 		"agents",

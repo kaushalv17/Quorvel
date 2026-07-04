@@ -41,7 +41,7 @@
 		"tool-calling",
 		"idempotency",
 		"reliability",
-		"belay",
+		"quorvel",
 		"ai-agents"
 	],
 	"license": "MIT",
