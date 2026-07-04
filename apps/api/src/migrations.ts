@@ -40,12 +40,21 @@ const IDEMPOTENCY_SQL = `create table if not exists idempotency_keys (
 // boot SQL (all "if not exists"), so they no-op on the existing prod DB and are
 // simply recorded as applied on the first run of this runner. Add new schema
 // changes as 0004_*, 0005_*, ... and NEVER edit an entry once it has shipped.
+const PAGE_INDEXES_SQL = `-- Keyset/cursor pagination (GET /v1/actions/page) index support.
+-- Completes the sort tuples used by pageRecent/pageByStatus so the keyset row
+-- comparison and idempotency_key tie-break are served straight from an index.
+create index if not exists belay_actions_page_recent_idx
+  on belay_actions (org_id, created_at desc, idempotency_key desc);
+create index if not exists belay_actions_page_status_idx
+  on belay_actions (org_id, status, created_at, idempotency_key);`
+
 export const MIGRATIONS: Migration[] = [
     { id: "0001_baseline_schema", sql: SCHEMA_SQL },
     { id: "0002_idempotency_keys", sql: IDEMPOTENCY_SQL },
     { id: "0003_dead_letters", sql: DEAD_LETTERS_SQL },
 	{ id: "0004_action_events", sql: ACTION_EVENTS_SQL },
     { id: "0005_alert_rules", sql: ALERT_RULES_SQL },
+    { id: "0006_keyset_page_indexes", sql: PAGE_INDEXES_SQL },
 ]
 
 /** Advisory-lock key so two booting instances can't migrate concurrently. */
