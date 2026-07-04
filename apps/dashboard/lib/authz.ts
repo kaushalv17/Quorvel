@@ -33,3 +33,8 @@ export async function requireAdmin(): Promise<void> {
   }
   if (!orgRole || !PRIVILEGED_ROLES.has(orgRole)) throw new ForbiddenError()
 }
+
+export async function isAdmin(): Promise<boolean> {
+  const { userId, orgId, orgRole } = await auth()
+  return Boolean(userId && orgId && orgRole && PRIVILEGED_ROLES.has(orgRole))
+}

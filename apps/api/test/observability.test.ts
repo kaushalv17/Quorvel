@@ -151,7 +151,7 @@ await it("HTTP: /v1/actions/:key/events + /v1/events route through handleRequest
     const issued = await svc.issueApiKey({})
     const auth = { authorization: "Bearer " + issued.apiKey }
     const call = (method: string, path: string, body: unknown = null) =>
-        handleRequest(svc, "admin", { method, path, query: {}, headers: auth, body })
+        handleRequest(svc, { method, path, query: {}, headers: auth, body })
 
     await call("POST", "/v1/actions", { idempotencyKey: "run1", tool: "email.send" })
     await call("POST", "/v1/actions/run1/running")

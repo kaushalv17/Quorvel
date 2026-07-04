@@ -22,8 +22,8 @@ void (async () => {
         const body = { name: "ci-key" }
         const path = "/v1/account/keys"
 
-        const first = await handleRequest(svc, undefined, req({ method: "POST", path, headers, body }))
-        const second = await handleRequest(svc, undefined, req({ method: "POST", path, headers, body }))
+        const first = await handleRequest(svc, req({ method: "POST", path, headers, body }))
+        const second = await handleRequest(svc, req({ method: "POST", path, headers, body }))
 
         assert.equal(first.status, 201)
         assert.equal(second.status, 201)
@@ -41,8 +41,8 @@ void (async () => {
         const headers = { authorization: `Bearer ${apiKey}`, "idempotency-key": "idem-2" }
         const path = "/v1/account/keys"
 
-        const first = await handleRequest(svc, undefined, req({ method: "POST", path, headers, body: { name: "a" } }))
-        const second = await handleRequest(svc, undefined, req({ method: "POST", path, headers, body: { name: "b" } }))
+        const first = await handleRequest(svc, req({ method: "POST", path, headers, body: { name: "a" } }))
+        const second = await handleRequest(svc, req({ method: "POST", path, headers, body: { name: "b" } }))
 
         assert.equal(first.status, 201)
         assert.equal(second.status, 422)

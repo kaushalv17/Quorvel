@@ -1,11 +1,12 @@
 packages:
   - "packages/*"
   - "apps/*"
+
 allowBuilds:
   esbuild: true
-
-onlyBuiltDependencies:
-  - esbuild
+  "@clerk/shared": true
+  msgpackr-extract: true
+  sharp: true
 
 overrides:
   esbuild: "0.28.1"

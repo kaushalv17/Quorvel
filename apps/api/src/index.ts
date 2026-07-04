@@ -53,7 +53,7 @@ export async function main(): Promise<void> {
     }
 
     const { deps, close } = buildDeps(store, { pool: pool as unknown as SqlPool | undefined })
-    const app = buildServer(store, { adminSecret: process.env.QUORVEL_ADMIN_SECRET, deps })
+    const app = buildServer(store, { deps })
 
     const port = Number(process.env.PORT ?? 8080)
     await app.listen({ port, host: "0.0.0.0" })

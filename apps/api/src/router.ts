@@ -59,11 +59,13 @@ async function resolveDashboardOrg(
 
 export async function handleRequest(
     svc: QuorvelCloudService,
-    adminSecret: string | undefined,
     req: RawRequest,
     dashboardSecret?: string,
 ): Promise<RawResponse> {
     try {
+        if (req.method === "GET" && (req.path === "/" || req.path === "")) {
+        	return { status: 200, body: { name: "Quorvel API", status: "ok", version: API_VERSION, docs: "https://docs.quorvel.tech" } }
+        }
         if (req.method === "GET" && req.path === "/health") {
             return { status: 200, body: { ok: true, service: "belay-cloud-api", version: API_VERSION } }
         }

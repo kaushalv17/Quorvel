@@ -9,7 +9,6 @@ import { QuorvelCloudService, type ServiceDeps } from "./service"
 import type { Store } from "./store"
 
 export interface ServerOptions {
-    adminSecret?: string
     dashboardSecret?: string
     deps?: ServiceDeps
 }
@@ -80,7 +79,6 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
         }
     })
     const svc = new QuorvelCloudService(store, opts.deps)
-    const adminSecret = opts.adminSecret ?? process.env.QUORVEL_ADMIN_SECRET
     const dashboardSecret = opts.dashboardSecret ?? process.env.DASHBOARD_SERVICE_SECRET
 
     // Per-caller rate limiting (cost guardrail). Authenticated callers are capped
@@ -130,7 +128,7 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
     app.all("/*", async (req: any, reply: any) => {
         const url: string = req.url ?? "/"
         const path = url.split("?")[0]
-        const res = await handleRequest(svc, adminSecret, {
+        const res = await handleRequest(svc, {
             method: req.method,
             path,
             query: req.query ?? {},

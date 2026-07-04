@@ -117,7 +117,7 @@ await it("HTTP: GET /v1/metrics returns aggregates + usage", async () => {
     const issued = await svc.issueApiKey({})
     const auth = { authorization: "Bearer " + issued.apiKey }
     const call = (method: string, path: string, body: unknown = null) =>
-        handleRequest(svc, "admin", { method, path, query: {}, headers: auth, body })
+        handleRequest(svc, { method, path, query: {}, headers: auth, body })
     await call("POST", "/v1/actions", { idempotencyKey: "r1", tool: "t" })
     await call("POST", "/v1/actions/r1/succeeded", { result: {} })
     const res = await call("GET", "/v1/metrics")

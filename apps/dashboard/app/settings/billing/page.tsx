@@ -1,6 +1,7 @@
 import { serverClient } from "@/lib/server-client"
 import { UpgradeButton } from "@/components/UpgradeButton"
 import { ManageBillingButton } from "@/components/ManageBillingButton"
+import { isAdmin } from "@/lib/authz"
 
 // Self-serve billing (Phase 2): shows the org's current plan + usage, lets the
 // user upgrade via Paddle checkout, and opens the hosted portal to manage an
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic"
 
 export default async function BillingPage() {
 	const me = await serverClient().me()
+	const admin = await isAdmin()
 	const { plan } = me.org
 	const { used, limit, overage } = me.usage
   const { features } = me
@@ -69,19 +71,19 @@ export default async function BillingPage() {
       </div>
 
       <div className="billing-actions">
-				<ManageBillingButton />
+				{admin ? <ManageBillingButton /> : null}
 			</div>
 
 			<div className="plans">
 				<div className="plan-card card">
 					<h3>Pro</h3>
 					<p className="subtle">100,000 tracked actions / month.</p>
-					<UpgradeButton plan="pro" label="Upgrade to Pro" />
+					{admin ? <UpgradeButton plan="pro" label="Upgrade to Pro" /> : null}
 				</div>
 				<div className="plan-card card">
 					<h3>Scale</h3>
 					<p className="subtle">Unlimited actions + priority support.</p>
-					<UpgradeButton plan="scale" label="Upgrade to Scale" />
+					{admin ? <UpgradeButton plan="scale" label="Upgrade to Scale" /> : null}
 				</div>
 			</div>
 		</>

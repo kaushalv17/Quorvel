@@ -17,18 +17,12 @@
     "dashboard:demo": "node packages/dashboard/server.mjs --demo",
     "dashboard:seed": "node --env-file=.env packages/dashboard/seed.mjs"
   },
-  "packageManager": "pnpm@9.12.0",
+  "packageManager": "pnpm@11.8.0",
   "license": "MIT",
   "devDependencies": {
     "tsx": "^4.19.0"
   },
   "dependencies": {
     "pg": "^8.12.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "esbuild": "0.28.1",
-      "postcss": "8.5.10"
-    }
   }
 }

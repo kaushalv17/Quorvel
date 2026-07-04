@@ -1,6 +1,7 @@
 import { serverClient } from "../../../lib/server-client"
 import type { AlertRuleRecord } from "../../../lib/quorvel"
 import { createAlertRuleAction, toggleAlertRuleAction, deleteAlertRuleAction } from "./actions"
+import { isAdmin } from "../../../lib/authz"
 
 export const dynamic = "force-dynamic"
 
@@ -12,6 +13,7 @@ const TRIGGER_LABELS: Record<string, string> = {
 
 export default async function AlertsPage() {
     const rules = await serverClient().listAlertRules()
+	const admin = await isAdmin()
 
     return (
         <>
@@ -21,7 +23,8 @@ export default async function AlertsPage() {
                 configured channels.
             </p>
 
-            <div className="card">
+            {admin && (
+<div className="card">
                 <h2>New rule</h2>
                 <form action={createAlertRuleAction} className="alert-form">
                     <input name="name" placeholder="Rule name" required />
@@ -35,6 +38,7 @@ export default async function AlertsPage() {
                     <button type="submit">Create rule</button>
                 </form>
             </div>
+)}
 
             {rules.length === 0 ? (
                 <div className="empty">No alert rules yet - alerts fan out to every configured channel.</div>
@@ -60,7 +64,8 @@ export default async function AlertsPage() {
                                     )}
                                 </div>
                             </div>
-                            <div className="alert-rule-actions">
+                            {admin && (
+<div className="alert-rule-actions">
                                 <span className={rule.enabled ? "badge badge-on" : "badge badge-off"}>
                                     {rule.enabled ? "enabled" : "disabled"}
                                 </span>
@@ -76,6 +81,7 @@ export default async function AlertsPage() {
                                     </button>
                                 </form>
                             </div>
+)}
                         </div>
                     ))}
                 </div>

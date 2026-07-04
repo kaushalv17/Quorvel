@@ -7,14 +7,13 @@ import { QuorvelCloudService } from "../src/service"
 import { MemStore } from "../src/store"
 import { MemAlertRuleStore } from "../src/alertRules"
 
-const ADMIN = "admin-secret"
 
 function newSvc() {
     return new QuorvelCloudService(new MemStore(), { alertRuleStore: new MemAlertRuleStore() })
 }
 
 async function call(svc: QuorvelCloudService, req: Partial<RawRequest>) {
-    return handleRequest(svc, ADMIN, {
+    return handleRequest(svc, {
         method: req.method ?? "GET",
         path: req.path ?? "/",
         query: req.query ?? {},

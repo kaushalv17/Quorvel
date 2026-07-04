@@ -6,10 +6,9 @@ import { QuorvelCloudService } from "../src/service"
 import { MemStore } from "../src/store"
 import { hashApiKey } from "../src/keys"
 
-const ADMIN = "admin-secret"
 
 async function call(svc: QuorvelCloudService, req: Partial<RawRequest>) {
-	return handleRequest(svc, ADMIN, {
+	return handleRequest(svc, {
 		method: req.method ?? "GET",
 		path: req.path ?? "/",
 		query: req.query ?? {},
