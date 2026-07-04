@@ -97,4 +97,4 @@ export { PostgresWorkflowStore } from "./postgres-workflow.js"
 
 // Phase 6 — hosted cloud backend
 export { HostedLedger, HostedLedgerError } from "./hosted.js"
-export type { HostedLedgerOptions } from "./hosted.js"
+export type { HostedLedgerOptions, ActionPage } from "./hosted.js"

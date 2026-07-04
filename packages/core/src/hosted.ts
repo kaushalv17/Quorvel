@@ -30,6 +30,12 @@ export interface HostedLedgerOptions {
   fetch?: typeof fetch
 }
 
+/** A page of action records plus the opaque cursor for the next page (null when exhausted). */
+export interface ActionPage {
+  items: ActionRecord[]
+  nextCursor: string | null
+}
+
 /** Thrown when the hosted API returns an unexpected (non-handled) status. */
 export class HostedLedgerError extends Error {
   constructor(
@@ -112,6 +118,21 @@ export class HostedLedger implements LedgerStore {
     if (typeof limit === "number") qs.set("limit", String(limit))
     const res = await this.request("GET", `/v1/actions?${qs.toString()}`)
     return this.parse<ActionRecord[]>(res)
+  }
+
+  async pageActions(
+    opts: { status?: ActionStatus; limit?: number; cursor?: string } = {},
+  ): Promise<ActionPage> {
+    const qs = new URLSearchParams()
+    if (opts.status) qs.set("status", opts.status)
+    if (typeof opts.limit === "number") qs.set("limit", String(opts.limit))
+    if (opts.cursor) qs.set("cursor", opts.cursor)
+    const query = qs.toString()
+    const res = await this.request(
+      "GET",
+      query ? `/v1/actions/page?${query}` : "/v1/actions/page",
+    )
+    return this.parse<ActionPage>(res)
   }
 
   async stats(filter: StatsFilter): Promise<Stats> {
