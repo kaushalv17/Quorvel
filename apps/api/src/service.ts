@@ -475,7 +475,16 @@ export class QuorvelCloudService {
     listRecent(orgId: string, limit?: number): Promise<ActionRecord[]> {
         return this.store.listRecent(orgId, limit)
     }
-    stats(orgId: string, filter: StatsFilter): Promise<Stats> {
+    pageActions(
+		orgId: string,
+		opts: { status?: ActionStatus; limit?: number; cursor?: import("./store").ActionCursor | null },
+	): Promise<import("./store").ActionPage> {
+		return opts.status
+			? this.store.pageByStatus(orgId, opts.status, { limit: opts.limit, cursor: opts.cursor })
+			: this.store.pageRecent(orgId, { limit: opts.limit, cursor: opts.cursor })
+	}
+
+	stats(orgId: string, filter: StatsFilter): Promise<Stats> {
         return this.store.stats(orgId, {
             scope: filter.scope ?? null,
             tool: filter.tool,

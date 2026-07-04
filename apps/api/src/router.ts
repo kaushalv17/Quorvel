@@ -3,6 +3,7 @@
 // call handleRequest, so the code under test is the code that runs.
 import { ApiError, QuorvelCloudService } from "./service"
 import type { ActionStatus } from "./types"
+import { decodeCursor, type ActionCursor } from "./store"
 
 /** The public API contract version. All public routes live under `/v1`. */
 export const API_VERSION = "1"
@@ -40,6 +41,16 @@ function parseIsoParam(raw: string | undefined, field: string): string | null {
         throw new ApiError(`${field} must be an ISO-8601 timestamp`, 400, "invalid_query")
     }
     return raw
+}
+
+/** Parse an opaque `?cursor=` token into a keyset cursor. Rejects junk with 400. */
+function parseCursor(raw: string | undefined): ActionCursor | null {
+	if (raw == null || raw === "") return null
+	try {
+		return decodeCursor(raw)
+	} catch {
+		throw new ApiError("cursor is malformed", 400, "invalid_query")
+	}
 }
 
 async function resolveDashboardOrg(
@@ -231,7 +242,17 @@ export async function handleRequest(
                 return { status: 200, body: rows }
             }
 
-            if (req.path === "/v1/events" && req.method === "GET") {
+            if (req.path === "/v1/actions/page" && req.method === "GET") {
+				const status = req.query.status as ActionStatus | undefined
+				const limit = parseLimit(req.query.limit)
+				const cursor = parseCursor(req.query.cursor)
+				return {
+					status: 200,
+					body: await svc.pageActions(orgId, { status, limit, cursor }),
+				}
+			}
+
+			if (req.path === "/v1/events" && req.method === "GET") {
 				const status = req.query.status as ActionStatus | undefined
 				const limit = parseLimit(req.query.limit)
 				return {

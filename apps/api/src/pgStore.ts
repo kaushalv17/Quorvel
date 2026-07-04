@@ -1,8 +1,8 @@
 // Durable Postgres-backed Store. Mirrors @quorvel/core''s PostgresLedger SQL
 // with an extra org_id tenant dimension on every query.
 import { Pool } from "pg"
-import { toRecord } from "./store"
-import type { Store } from "./store"
+import { buildActionPage, clampPageSize, toRecord } from "./store"
+import type { ActionPage, PageOpts, Store } from "./store"
 import type {
     ActionRecord,
     ActionStatus,
@@ -180,7 +180,37 @@ export class PgStore implements Store {
         )
         return rows.map((r: Record<string, unknown>) => toRecord(mapRow(r)))
     }
-    async stats(orgId: string, filter: StatsFilter): Promise<Stats> {
+    async pageByStatus(orgId: string, status: ActionStatus, opts: PageOpts = {}): Promise<ActionPage> {
+		const limit = clampPageSize(opts.limit)
+		const params: unknown[] = [orgId, status]
+		let keyset = ""
+		if (opts.cursor) {
+			params.push(opts.cursor.createdAt, opts.cursor.idempotencyKey)
+			keyset = ` and (created_at, idempotency_key) > ($${params.length - 1}::timestamptz, $${params.length}::text)`
+		}
+		params.push(limit + 1)
+		const { rows } = await this.pool.query(
+			`select ${ACTION_COLS} from belay_actions where org_id=$1 and status=$2${keyset} order by created_at asc, idempotency_key asc limit $${params.length}`,
+			params,
+		)
+		return buildActionPage(rows.map((r: Record<string, unknown>) => toRecord(mapRow(r))), limit)
+	}
+	async pageRecent(orgId: string, opts: PageOpts = {}): Promise<ActionPage> {
+		const limit = clampPageSize(opts.limit)
+		const params: unknown[] = [orgId]
+		let keyset = ""
+		if (opts.cursor) {
+			params.push(opts.cursor.createdAt, opts.cursor.idempotencyKey)
+			keyset = ` and (created_at, idempotency_key) < ($${params.length - 1}::timestamptz, $${params.length}::text)`
+		}
+		params.push(limit + 1)
+		const { rows } = await this.pool.query(
+			`select ${ACTION_COLS} from belay_actions where org_id=$1${keyset} order by created_at desc, idempotency_key desc limit $${params.length}`,
+			params,
+		)
+		return buildActionPage(rows.map((r: Record<string, unknown>) => toRecord(mapRow(r))), limit)
+	}
+	async stats(orgId: string, filter: StatsFilter): Promise<Stats> {
         const { rows } = await this.pool.query(
             `select count(*)::int as count, coalesce(sum(cost),0)::float8 as total_cost
                from belay_actions

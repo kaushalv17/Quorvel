@@ -4,7 +4,7 @@
 import Fastify from "fastify"
 import { randomUUID } from "node:crypto"
 import { handleRequest, API_VERSION } from "./router"
-import { FixedWindowRateLimiter, identifyCaller } from "./rateLimit"
+import { FixedWindowRateLimiter, createRateLimiter, identifyCaller } from "./rateLimit"
 import { QuorvelCloudService, type ServiceDeps } from "./service"
 import type { Store } from "./store"
 
@@ -86,12 +86,13 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
     // Both default OFF (limit 0) so prod is unaffected until you opt in.
     const rlMax = Number(process.env.QUORVEL_RATE_LIMIT_PER_MIN ?? 0)
     const rlAnonMax = Number(process.env.QUORVEL_RATE_LIMIT_ANON_PER_MIN ?? rlMax)
-    const authedLimiter = rlMax > 0 ? new FixedWindowRateLimiter(rlMax) : undefined
-    const anonLimiter = rlAnonMax > 0 ? new FixedWindowRateLimiter(rlAnonMax) : undefined
+    const redisUrl = process.env.REDIS_URL
+	const authedLimiter = rlMax > 0 ? createRateLimiter(rlMax, { redisUrl }) : undefined
+    const anonLimiter = rlAnonMax > 0 ? createRateLimiter(rlAnonMax, { redisUrl }) : undefined
 
     if (authedLimiter || anonLimiter) {
         // Periodically drop expired buckets so memory can't grow unbounded.
-        const live = [authedLimiter, anonLimiter].filter(Boolean) as FixedWindowRateLimiter[]
+        const live = [authedLimiter, anonLimiter].filter((l): l is FixedWindowRateLimiter => l instanceof FixedWindowRateLimiter)
         const sweepTimer = setInterval(() => {
             for (const l of live) l.sweep()
         }, 60_000)
@@ -112,7 +113,7 @@ export function buildServer(store: Store, opts: ServerOptions = {}) {
             const limiter = caller.authenticated ? authedLimiter : anonLimiter
             if (!limiter) return
 
-            const r = limiter.check(caller.id)
+            const r = await limiter.check(caller.id)
             reply.header("x-ratelimit-limit", String(r.limit))
             reply.header("x-ratelimit-remaining", String(r.remaining))
             reply.header("x-ratelimit-reset", String(Math.ceil(r.resetMs / 1000)))

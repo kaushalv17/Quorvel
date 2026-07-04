@@ -39,6 +39,64 @@ export function toRecord(s: StoredAction): ActionRecord {
     return r
 }
 
+/** Opaque keyset cursor over the stable (createdAt, idempotencyKey) pair. */
+export interface ActionCursor {
+	createdAt: string
+	idempotencyKey: string
+}
+
+/** Options for a keyset-paginated action listing. */
+export interface PageOpts {
+	limit?: number
+	cursor?: ActionCursor | null
+}
+
+/** A page of records plus the opaque cursor for the next page (null when exhausted). */
+export interface ActionPage {
+	items: ActionRecord[]
+	nextCursor: string | null
+}
+
+/** Default page size when a caller does not specify one. */
+export const DEFAULT_PAGE_SIZE = 100
+/** Hard cap on page size to bound query cost. */
+export const MAX_PAGE_SIZE = 1000
+
+export function clampPageSize(limit?: number): number {
+	if (typeof limit !== "number" || !Number.isFinite(limit)) return DEFAULT_PAGE_SIZE
+	return Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(limit)))
+}
+
+export function encodeCursor(c: ActionCursor): string {
+	return Buffer.from(`${c.createdAt}|${c.idempotencyKey}`, "utf8").toString("base64url")
+}
+
+export function decodeCursor(raw: string): ActionCursor {
+	const s = Buffer.from(raw, "base64url").toString("utf8")
+	const sep = s.indexOf("|")
+	if (sep < 0) throw new Error("malformed cursor")
+	const createdAt = s.slice(0, sep)
+	const idempotencyKey = s.slice(sep + 1)
+	if (!createdAt || Number.isNaN(Date.parse(createdAt))) throw new Error("malformed cursor")
+	return { createdAt, idempotencyKey }
+}
+
+/**
+ * Trim a limit+1 fetch into a page. Callers fetch one extra row to detect
+ * whether another page exists; the extra row is dropped and its predecessor
+ * becomes the next cursor.
+ */
+export function buildActionPage(rows: ActionRecord[], limit: number): ActionPage {
+	const hasMore = rows.length > limit
+	const items = hasMore ? rows.slice(0, limit) : rows
+	const last = items[items.length - 1]
+	const nextCursor =
+		hasMore && last
+			? encodeCursor({ createdAt: last.createdAt, idempotencyKey: last.idempotencyKey })
+			: null
+	return { items, nextCursor }
+}
+
 export interface Store {
     insertOrg(org: Org): Promise<void>
     getOrg(orgId: string): Promise<Org | undefined>
@@ -73,7 +131,13 @@ export interface Store {
     getMembership(clerkUserId: string, orgId: string): Promise<Membership | undefined>
     listMembershipsByUser(clerkUserId: string): Promise<Membership[]>
     listMembershipsByOrg(orgId: string): Promise<Membership[]>
-    // --- Idempotency-Key replay (Phase 2 hardening) ---
+    pageByStatus(
+		orgId: string,
+		status: ActionStatus,
+		opts?: PageOpts,
+	): Promise<ActionPage>
+	pageRecent(orgId: string, opts?: PageOpts): Promise<ActionPage>
+	// --- Idempotency-Key replay (Phase 2 hardening) ---
     claimIdempotency(rec: {
         orgId: string
         idemKey: string
@@ -247,7 +311,52 @@ export class MemStore implements Store {
         return { count, totalCost }
     }
 
-    private readonly memberships = new Map<string, Membership>()
+    async pageByStatus(
+		orgId: string,
+		status: ActionStatus,
+		opts: PageOpts = {},
+	): Promise<ActionPage> {
+		const rows: StoredAction[] = []
+		for (const r of this.actions.values()) {
+			if (r.orgId === orgId && r.status === status) rows.push(r)
+		}
+		rows.sort((a, b) => {
+			const byCreated = a.createdAt.localeCompare(b.createdAt)
+			return byCreated !== 0 ? byCreated : a.idempotencyKey.localeCompare(b.idempotencyKey)
+		})
+		const c = opts.cursor
+		const after = c
+			? rows.filter(
+					(r) =>
+						r.createdAt > c.createdAt ||
+						(r.createdAt === c.createdAt && r.idempotencyKey > c.idempotencyKey),
+				)
+			: rows
+		const limit = clampPageSize(opts.limit)
+		return buildActionPage(after.slice(0, limit + 1).map(toRecord), limit)
+	}
+	async pageRecent(orgId: string, opts: PageOpts = {}): Promise<ActionPage> {
+		const rows: StoredAction[] = []
+		for (const r of this.actions.values()) {
+			if (r.orgId === orgId) rows.push(r)
+		}
+		rows.sort((a, b) => {
+			const byCreated = b.createdAt.localeCompare(a.createdAt)
+			return byCreated !== 0 ? byCreated : b.idempotencyKey.localeCompare(a.idempotencyKey)
+		})
+		const c = opts.cursor
+		const after = c
+			? rows.filter(
+					(r) =>
+						r.createdAt < c.createdAt ||
+						(r.createdAt === c.createdAt && r.idempotencyKey < c.idempotencyKey),
+				)
+			: rows
+		const limit = clampPageSize(opts.limit)
+		return buildActionPage(after.slice(0, limit + 1).map(toRecord), limit)
+	}
+
+	private readonly memberships = new Map<string, Membership>()
     private mkey(clerkUserId: string, orgId: string): string {
         return clerkUserId + "::" + orgId
     }

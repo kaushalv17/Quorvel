@@ -6,9 +6,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist/index.js --packages=external",
     "dev": "tsx watch src/index.ts",
-    "test": "tsx test/api.test.ts && tsx test/queue.test.ts && tsx test/alerts.test.ts && tsx test/billing.test.ts && tsx test/paddle.test.ts && tsx test/idempotency.test.ts && tsx test/ratelimit.test.ts && tsx test/dlq.test.ts && tsx test/migrations.test.ts && tsx test/resilience.test.ts && tsx test/observability.test.ts && tsx test/metrics.test.ts && tsx test/alertRules.test.ts && tsx test/alertRulesHttp.test.ts && tsx test/usageNotifier.test.ts",
+    "test": "tsx test/api.test.ts && tsx test/queue.test.ts && tsx test/alerts.test.ts && tsx test/billing.test.ts && tsx test/paddle.test.ts && tsx test/idempotency.test.ts && tsx test/ratelimit.test.ts && tsx test/dlq.test.ts && tsx test/migrations.test.ts && tsx test/resilience.test.ts && tsx test/observability.test.ts && tsx test/metrics.test.ts && tsx test/alertRules.test.ts && tsx test/alertRulesHttp.test.ts && tsx test/usageNotifier.test.ts && tsx test/pagination.test.ts && tsx test/redisRateLimit.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": ["quorvel", "reliability", "ledger", "fastify", "postgres", "redis", "bullmq", "idempotency", "approvals", "billing", "agents"],
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/pg": "^8.11.0",
+    "esbuild": "0.28.1",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   }
