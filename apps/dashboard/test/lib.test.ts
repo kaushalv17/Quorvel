@@ -99,6 +99,28 @@ void (async () => {
 		)
 	})
 
+	section("QuorvelClient pageActions")
+
+	await it("pageActions builds status + limit + cursor query and parses items + nextCursor", async () => {
+		const { fetchImpl, calls } = fakeFetch(() => ({ status: 200, body: { items: [action()], nextCursor: "Y3Vyc29y" } }))
+		const client = new QuorvelClient({ baseUrl: "https://api.example.com", apiKey: "k", fetchImpl })
+		const res = await client.pageActions({ status: "succeeded", limit: 50, cursor: "abc123" })
+		assert.equal(calls[0].url, "https://api.example.com/v1/actions/page?status=succeeded&limit=50&cursor=abc123")
+		assert.equal(calls[0].init?.method, "GET")
+		assert.equal(res.items.length, 1)
+		assert.equal(res.items[0].idempotencyKey, "k1")
+		assert.equal(res.nextCursor, "Y3Vyc29y")
+	})
+
+	await it("pageActions omits query params that are not provided", async () => {
+		const { fetchImpl, calls } = fakeFetch(() => ({ status: 200, body: { items: [], nextCursor: null } }))
+		const client = new QuorvelClient({ baseUrl: "https://api.example.com", apiKey: "k", fetchImpl })
+		const res = await client.pageActions()
+		assert.equal(calls[0].url, "https://api.example.com/v1/actions/page")
+		assert.deepEqual(res.items, [])
+		assert.equal(res.nextCursor, null)
+	})
+
 	section("groupByScope")
 
 	await it("buckets actions by scope and defaults unscoped", () => {

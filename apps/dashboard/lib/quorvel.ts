@@ -44,6 +44,12 @@ export interface ActionRecord {
 	createdAt: string
 }
 
+/** A page of action records plus the opaque cursor for the next page (null when exhausted). */
+export interface ActionPage {
+	items: ActionRecord[]
+	nextCursor: string | null
+}
+
 export interface UsageSnapshot {
   plan: string
   period: string
@@ -267,6 +273,15 @@ export class QuorvelClient {
 
 	listByStatus(status: ActionStatus, limit = 50): Promise<ActionRecord[]> {
 		return this.request("GET", `/v1/actions?status=${encodeURIComponent(status)}&limit=${limit}`)
+	}
+
+	pageActions(opts: { status?: ActionStatus; limit?: number; cursor?: string } = {}): Promise<ActionPage> {
+		const q = new URLSearchParams()
+		if (opts.status) q.set("status", opts.status)
+		if (typeof opts.limit === "number") q.set("limit", String(opts.limit))
+		if (opts.cursor) q.set("cursor", opts.cursor)
+		const qs = q.toString()
+		return this.request("GET", qs ? `/v1/actions/page?${qs}` : "/v1/actions/page")
 	}
 
 	approvalQueue(limit = 50): Promise<ActionRecord[]> {
