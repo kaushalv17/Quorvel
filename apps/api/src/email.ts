@@ -14,7 +14,7 @@ export interface EmailConfig {
 export interface SendEmailInput {
 	to: string | string[]
 	subject: string
-	html: string
+	html?: string
 	text?: string
 	replyTo?: string
 }
@@ -68,7 +68,7 @@ export class Emailer {
 				const text = await res.text().catch(() => "")
 				return { sent: false, error: `resend ${res.status}: ${text}` }
 			}
-			const json = await res.json().catch(() => ({}))
+			const json = typeof (res as any).json === "function" ? await (res as any).json().catch(() => ({})) : {}
 			return { sent: true, id: json?.id }
 		} catch (err) {
 			return { sent: false, error: (err as Error).message }

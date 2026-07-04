@@ -3,6 +3,7 @@
 // is a bus subscriber. All transports take an injectable fetch for testing.
 import type { DomainEvent } from "./events"
 import type { AlertRuleRecord, AlertRuleStore, AlertTrigger } from "./alertRules"
+import { Emailer } from "./email"
 
 export interface FetchResponse {
 	ok: boolean
@@ -79,25 +80,28 @@ export class WebhookTransport implements AlertTransport {
 
 export class EmailTransport implements AlertTransport {
 	readonly name = "email"
+	private readonly emailer: Emailer
+	private readonly to: string
 	constructor(
-		private readonly opts: { apiKey: string; from: string; to: string },
-		private readonly fetchImpl: FetchLike = defaultFetch,
-	) {}
-	async send(alert: Alert): Promise<void> {
-		const res = await this.fetchImpl("https://api.resend.com/emails", {
-			method: "POST",
-			headers: {
-				authorization: `Bearer ${this.opts.apiKey}`,
-				"content-type": "application/json",
-			},
-			body: JSON.stringify({
-				from: this.opts.from,
-				to: this.opts.to,
-				subject: alert.title,
-				text: alert.body,
-			}),
+		opts: { apiKey: string; from: string; to: string },
+		fetchImpl: FetchLike = defaultFetch,
+	) {
+		this.to = opts.to
+		this.emailer = new Emailer({
+			apiKey: opts.apiKey,
+			from: opts.from,
+			fetchImpl: fetchImpl as unknown as (url: string, init: any) => Promise<any>,
 		})
-		await ensureOk(res, "email alert")
+	}
+	async send(alert: Alert): Promise<void> {
+		const result = await this.emailer.send({
+			to: this.to,
+			subject: alert.title,
+			text: alert.body,
+		})
+		if (!result.sent && !result.skipped) {
+			throw new Error(`email alert failed: ${result.error ?? "unknown"}`)
+		}
 	}
 }
 
