@@ -135,6 +135,31 @@ export class HostedLedger implements LedgerStore {
     return this.parse<ActionPage>(res)
   }
 
+  /**
+   * Async-iterate every action across all pages, transparently following
+   * the opaque cursor. Yields records in server order (newest-first),
+   * starting from an optional cursor, and stops when the server returns a
+   * null cursor.
+   *
+   *   for await (const action of ledger.iterateActions({ status: "pending" })) {
+   *     // handle action
+   *   }
+   */
+  async *iterateActions(
+    opts: { status?: ActionStatus; limit?: number; cursor?: string } = {},
+  ): AsyncGenerator<ActionRecord, void, unknown> {
+    let cursor = opts.cursor
+    do {
+      const page = await this.pageActions({
+        status: opts.status,
+        limit: opts.limit,
+        cursor,
+      })
+      for (const item of page.items) yield item
+      cursor = page.nextCursor ?? undefined
+    } while (cursor)
+  }
+
   async stats(filter: StatsFilter): Promise<Stats> {
     const res = await this.request("POST", "/v1/stats", {
       scope: filter.scope,
