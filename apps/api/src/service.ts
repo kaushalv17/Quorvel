@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import { actionCreated, actionTransition } from "./events"
 import { currentPeriod, planFeatures, planLimit, type UsageLimiter, type UsageSnapshot } from "./billing"
 import { generateApiKey, hashApiKey, keyPrefix, newId } from "./keys"
-import { toRecord, type Store } from "./store"
+import { NON_COUNTING, toRecord, type Store } from "./store"
 import type { ActionEvent, ActionEventLog, EventMetrics } from "./actionEvents"
 import type { DeadLetterRecord, DeadLetterStore } from "./deadLetters"
 import type { PaddleBilling, CheckoutResult, WebhookResult } from "./paddle"
@@ -48,6 +48,31 @@ export class ApiError extends Error {
 export const authError = (msg = "unauthorized") => new ApiError(msg, 401, "unauthorized")
 export const badRequest = (msg: string) => new ApiError(msg, 400, "bad_request")
 export const quotaError = (msg: string) => new ApiError(msg, 402, "quota_exceeded")
+export const conflictError = (msg: string) =>
+    new ApiError(msg, 409, "invalid_transition")
+
+/**
+ * Legal action state-machine transitions. Terminal states (succeeded, rejected,
+ * denied) have NO outgoing transitions; `failed` is retryable per the SDK
+ * run() lifecycle. Enforced server-side so a buggy or hostile caller cannot
+ * resurrect a completed action or bypass the approval gate.
+ */
+export const ALLOWED_TRANSITIONS: Record<ActionStatus, ReadonlyArray<ActionStatus>> = {
+    pending: ["running", "succeeded", "failed", "awaiting_approval", "denied", "rejected"],
+    running: ["running", "succeeded", "failed", "awaiting_approval", "denied"],
+    awaiting_approval: ["approved", "rejected", "denied"],
+    approved: ["running", "succeeded", "failed"],
+    failed: ["running", "succeeded", "failed", "awaiting_approval", "denied"],
+    succeeded: [],
+    rejected: [],
+    denied: [],
+}
+
+export function assertTransition(from: ActionStatus, to: ActionStatus): void {
+    if (!(ALLOWED_TRANSITIONS[from] ?? []).includes(to)) {
+        throw conflictError(`illegal action transition: ${from} -> ${to}`)
+    }
+}
 
 export const DEFAULT_SCOPES = ["actions:read", "actions:write"]
 
@@ -389,8 +414,33 @@ export class QuorvelCloudService {
         return row ? toRecord(row) : undefined
     }
 
+    private async reconcileUsage(
+        orgId: string,
+        from: ActionStatus,
+        to: ActionStatus,
+    ): Promise<void> {
+        if (!this.limiter) return
+        const wasCounting = !NON_COUNTING.has(from)
+        const isCounting = !NON_COUNTING.has(to)
+        if (wasCounting && !isCounting) {
+            // Non-billable terminal state (failed/denied/rejected): refund the
+            // slot reserved at insert so it never consumes monthly quota.
+            await this.limiter.release(orgId)
+        } else if (!wasCounting && isCounting) {
+            // A previously non-counting action (e.g. a retried failure) is
+            // billable again; best-effort re-reserve, ignoring the verdict so
+            // retries are never hard-blocked by quota.
+            await this.limiter.reserve(orgId).catch(() => {})
+        }
+    }
+
     private async transition(orgId: string, key: string, patch: TransitionPatch): Promise<void> {
+        const current = await this.store.getAction(orgId, key)
+        if (!current) return
+        const fromStatus = current.status
+        assertTransition(fromStatus, patch.status)
         await this.store.applyTransition(orgId, key, patch)
+        await this.reconcileUsage(orgId, fromStatus, patch.status)
         if (this.bus) {
             const row = await this.store.getAction(orgId, key)
             if (row) await this.bus.publish(actionTransition(row))

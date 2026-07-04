@@ -252,5 +252,46 @@ await (async () => {
         assert.equal(await u.get("o", currentPeriod()), 1)
     })
 
+    section("state-machine transition guard + usage refund")
+
+    await it("guard rejects illegal transitions and locks terminal states", async () => {
+        const svc = new QuorvelCloudService(new MemStore())
+        await svc.insertPending("o", { idempotencyKey: "t1", scope: null, tool: "t" })
+        await svc.markSucceeded("o", "t1", { ok: true })
+        await assert.rejects(
+            () => svc.markRunning("o", "t1"),
+            (e: unknown) => e instanceof ApiError && e.statusCode === 409,
+        )
+        await svc.insertPending("o", { idempotencyKey: "t2", scope: null, tool: "t" })
+        await svc.markDenied("o", "t2", "policy")
+        await assert.rejects(
+            () => svc.markApproved("o", "t2"),
+            (e: unknown) => e instanceof ApiError && e.statusCode === 409,
+        )
+    })
+
+    await it("failed / denied actions refund their reserved usage slot", async () => {
+        const u = new MemUsageStore()
+        const meter = new UsageMeter(u, plans("free"))
+        const svc = new QuorvelCloudService(new MemStore(), { limiter: meter })
+        await svc.insertPending("o", { idempotencyKey: "f1", scope: null, tool: "t" })
+        assert.equal(await u.get("o", currentPeriod()), 1)
+        await svc.markFailed("o", "f1", "boom")
+        assert.equal(await u.get("o", currentPeriod()), 0)
+    })
+
+    await it("a retried failure re-reserves its slot when it runs again", async () => {
+        const u = new MemUsageStore()
+        const meter = new UsageMeter(u, plans("free"))
+        const svc = new QuorvelCloudService(new MemStore(), { limiter: meter })
+        await svc.insertPending("o", { idempotencyKey: "r1", scope: null, tool: "t" })
+        await svc.markFailed("o", "r1", "boom")
+        assert.equal(await u.get("o", currentPeriod()), 0)
+        await svc.markRunning("o", "r1")
+        assert.equal(await u.get("o", currentPeriod()), 1)
+        await svc.markSucceeded("o", "r1", null)
+        assert.equal(await u.get("o", currentPeriod()), 1)
+    })
+
     summary()
 })()
