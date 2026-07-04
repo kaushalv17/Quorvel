@@ -11,9 +11,9 @@ function fmt(iso: string): string {
 export default async function AgentTimelinePage({
 	params,
 }: {
-	params: { scope: string }
+	params: Promise<{ scope: string }>
 }) {
-	const scope = decodeURIComponent(params.scope)
+	const scope = decodeURIComponent((await params).scope)
 	const recent = await serverClient().listRecent(200)
 	const actions = recent.filter((a) => (a.scope ?? "(unscoped)") === scope)
 

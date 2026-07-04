@@ -13,10 +13,10 @@ function fmt(iso: string): string {
 export default async function RunTimelinePage({
     params,
 }: {
-    params: { scope: string; key: string }
+    params: Promise<{ scope: string; key: string }>
 }) {
-    const scope = decodeURIComponent(params.scope)
-    const key = decodeURIComponent(params.key)
+    const scope = decodeURIComponent((await params).scope)
+    const key = decodeURIComponent((await params).key)
 
     let timeline: RunTimeline
     try {
