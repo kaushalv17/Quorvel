@@ -472,17 +472,21 @@ button.danger { color: #f87171; }
 .plan-limits .limit-list span { color: #666; }
 .plan-limits .limit-list b { font-variant-numeric: tabular-nums; }
 .overage-note { color: #c0392b; font-size: 12px; font-weight: 600; }
-/* --- Clerk sign-up: keep First/Last name in two even columns inside the card --- */
+
+/* --- Clerk sign-up: fit First/Last name inputs inside their grid columns --- */
 .cl-formFieldRow__name {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
 }
 .cl-formFieldRow__name .cl-formField {
-    min-width: 0;
+    min-width: 0 !important;
 }
-.cl-formFieldInput {
-    width: 100%;
-    box-sizing: border-box;
+.cl-formFieldInput,
+.cl-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
