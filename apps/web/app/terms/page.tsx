@@ -14,8 +14,8 @@ export default function TermsPage() {
         <>
           These Terms of Service (“Terms”) are a legal agreement between you and Quorvel
           (“Quorvel”, “we”, “us”). They govern your access to and use of the Quorvel website,
-          SDK, API, and hosted dashboard (together, the “Service”). By creating an account,
-          joining the waitlist, or using the Service, you agree to these Terms.
+          SDK, API, and hosted dashboard (together, the “Service”). By creating an account
+          or using the Service, you agree to these Terms.
         </>
       }
     >

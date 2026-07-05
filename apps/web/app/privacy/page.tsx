@@ -36,7 +36,7 @@ export default function PrivacyPage() {
           (plan, country, last four digits, transaction IDs) but never your full card number.
         </Li>
         <Li><strong>Usage data</strong> — logs, IP address, and device/browser information, used for security and reliability.</Li>
-        <Li><strong>Communications</strong> — emails and waitlist sign-ups you send us.</Li>
+        <Li><strong>Communications</strong> — emails and account sign-ups you send us.</Li>
       </Ul>
 
       <H2>3. How we use your information</H2>
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
         <Li>Upstash — managed Redis for queues and alerts</Li>
         <Li>Paddle — payments and Merchant of Record</Li>
         <Li>Zoho Mail — business email</Li>
-        <Li>Formspree — waitlist form handling</Li>
+        <Li>Clerk — authentication and account sign-up</Li>
       </Ul>
       <P>Each processes data only as needed to provide its service to us.</P>
 
